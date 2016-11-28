@@ -12,8 +12,8 @@ data Statement
   | (:=) Name
          Expression
   | If Expression
-       Statement
-       Statement
+       [Statement]
+       [Statement]
   | While Expression
           [Statement]
   | Var [Variable]
@@ -32,19 +32,19 @@ data Expression
   | BoolVal Bool
   | Name Name
   | (:+:) Expression
-          Expression
+         Expression
   | (:-:) Expression
-          Expression
+        Expression
   | (:&&:) Expression
-           Expression
+         Expression
   | (:||:) Expression
-           Expression
+         Expression
   | (:=>:) Expression
-           Expression
+            Expression
   | (:<:) Expression
-          Expression
+             Expression
   | (:<=:) Expression
-           Expression
+                  Expression
   | (:=:) Expression
           Expression
   | Forall Variable
