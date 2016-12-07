@@ -78,15 +78,11 @@ substitute v x b boundVariables =
             else i'
         vars = fvx <> freeVars e
 
-
 calcWlp :: [Statement] -> Expression -> Expression
 calcWlp [] postc = postc
-calcWlp statements postc =
-  case s of
-    Skip -> calcWlp st postc
-    Assert e -> calcWlp st (e :&&: postc)
-    Assume e -> calcWlp st (e :=>: postc)
-    (n := e) -> calcWlp st (substitute n e postc mempty)
-  where
-    st = init statements
-    s = last statements
+calcWlp (stmt:stmts) postc =
+  case stmt of
+    Skip -> calcWlp stmts postc
+    Assert e -> e :&&: calcWlp stmts postc
+    Assume e -> e :=>: calcWlp stmts postc
+    (n := e) -> substitute n e (calcWlp stmts postc) mempty
