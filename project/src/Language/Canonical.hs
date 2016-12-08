@@ -7,12 +7,15 @@ module Language.Canonical
   , Statement(..)
   , Name(..)
   , Unique(..)
+  , PrimitiveType(..)
+  , Type(..)
   , showStmts
   ) where
 
 import Text.PrettyPrint
 import Language
-       (Expression(..), Variable(..), Name(..), Unique(..))
+       (Expression(..), Variable(..), Name(..), Unique(..),
+        PrimitiveType(..), Type(..))
 
 data Statement
   = Skip
@@ -22,9 +25,10 @@ data Statement
          Expression
   | Var [Variable]
         [Statement]
+  deriving (Eq, Show)
 
-instance Show Statement where
-  show = render . stmt
+{-instance Show Statement where
+  show = render . stmt-}
 
 showStmts = putStrLn . render . stmts
 

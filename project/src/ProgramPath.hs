@@ -20,6 +20,8 @@ paths n (While e s:xs) =
     (paths (n - 1) (While e s : xs)) <>
   fmap (Canonical.Assume (Canonical.Not e) :) (paths (n - 1) xs)
 
+-- we assume no stuff is shadowed, so this is sound
+paths n (Var _ s:xs) = paths n s <> paths n xs
 paths n (e:xs) = fmap (toCanonical e :) (paths n xs)
 
 toCanonical :: Statement -> Canonical.Statement
@@ -28,3 +30,4 @@ toCanonical (Assume e) = Canonical.Assume e
 toCanonical (Assert e) = Canonical.Assert e
 toCanonical (a := e) = (Canonical.:=) a e
 toCanonical (Var v s) = Canonical.Var v (map toCanonical s)
+toCanonical x = error $ "tried to cannon " ++ show x

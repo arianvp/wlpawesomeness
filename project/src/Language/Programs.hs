@@ -21,6 +21,9 @@ exampleE =
     , Assert (Name ("y") :=: IntVal 0)
     ]
 
+progToStmt :: Program -> Statement
+progToStmt (Program xs ys body) = Var (xs ++ ys) body
+
 {- minind(a,i,N|r) {
  -  var min in
  -    min := a[i]

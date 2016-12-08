@@ -12,7 +12,7 @@ data Statement
   = Skip
   | Assert Expression
   | Assume Expression
-  | (:=) Name
+  | (:=) String
          Expression
   | If Expression
        [Statement]
@@ -21,10 +21,8 @@ data Statement
           [Statement]
   | Var [Variable]
         [Statement]
-  deriving (Eq)
+  deriving (Eq, Show)
 
-instance Show Statement where
-  show = render . stmt
 
 stmts :: [Statement] -> Doc
 stmts ss = vcat $ punctuate (text ";") (map stmt ss)
@@ -51,7 +49,7 @@ instance Show Variable where
 data Expression
   = IntVal Int
   | BoolVal Bool
-  | Name Name
+  | Name String
   | (:+:) Expression Expression
   | (:-:) Expression
           Expression
@@ -82,6 +80,7 @@ expr :: Expression -> Doc
 expr (IntVal i) = int i
 expr (BoolVal b) = bool b
 expr (Name name) = text name
+expr (Not x) = text "~" <> expr x
 expr (a :+: b) = lparen <> expr a <> text "+" <> expr b <> rparen
 expr (a :-: b) = lparen <> expr a <> text "-" <> expr b <> rparen
 expr (a :&&: b) = lparen <> expr a <> text "&&" <> expr b <> rparen
@@ -90,6 +89,7 @@ expr (a :=>: b) = lparen <> expr a <> text "=>" <> expr b <> rparen
 expr (a :<: b) = lparen <> expr a <> text "<" <> expr b <> rparen
 expr (a :<=: b) = lparen <> expr a <> text "<=" <> expr b <> rparen
 expr (a :=: b) = lparen <> expr a <> text "=" <> expr b <> rparen
+expr (Forall x y) = lparen <> text "∀" <> text (show x) <> text "." <> expr y
 
 instance Show Expression where
   show = render . expr
