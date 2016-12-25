@@ -16,10 +16,10 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Language
-                     , Language.Canonical
-                     , Language.Programs
                      , ProgramPath
-                     , WLP
+                     , Wlp
+                     , Unshadow
+                     , Logic
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , mtl

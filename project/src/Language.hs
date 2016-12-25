@@ -6,7 +6,9 @@ data Program =
   Program [Parameter] -- ^ input parameters
           [Parameter] -- ^ output parameters
           [Statement] -- ^ body
-  deriving (Show)
+  deriving (Eq)
+
+instance Show Program where
 
 data Statement
   = Skip
@@ -21,17 +23,28 @@ data Statement
           [Statement]
   | Var [Variable]
         [Statement]
-  deriving (Eq, Show)
+  deriving (Eq)
 
+instance Show Statement where
+  show x = render (stmt x)
+
+showStmts :: [Statement] -> String
+showStmts s = render (stmts s)
+--
+var :: Variable -> Doc
+var (Variable name typs) = text name
 
 stmts :: [Statement] -> Doc
 stmts ss = vcat $ punctuate (text ";") (map stmt ss)
 stmt :: Statement -> Doc
 stmt Skip = text "skip"
 stmt (Assert expr) = text "assert" <> text (show expr)
-stmt (a := b) = text (show a) <> text " := " <> text (show b)
+stmt (Assume expr) = text "assume" <> text (show expr)
+stmt (a := b) = text (a) <> text " := " <> text (show b)
+stmt (Var vars s) =
+  text "var(" <> (hcat $ punctuate (text ",") (map var vars)) <> text "){"
+  $$ nest 4 (stmts s)
 
-type Unique = Int
 
 type Name = String
 
@@ -45,26 +58,35 @@ data Variable =
 instance Show Variable where
   show (Variable name typ) = name ++ ":" ++ show typ
 
+data BinOp
+  = Plus
+  | Min
+  | Conj
+  | Disj
+  | Impl
+  | Le
+  | Leq
+  | Eq
+  deriving (Eq, Ord, Enum)
 
+instance Show BinOp where
+  show x =
+    case x of
+      Plus -> "+"
+      Min -> "-"
+      Conj -> "∧"
+      Disj -> "∨"
+      Impl -> "⇒"
+      Le -> "<"
+      Leq -> "≤"
+      Eq -> "="
+
+ -- todo fixitivity
 data Expression
   = IntVal Int
   | BoolVal Bool
   | Name String
-  | (:+:) Expression Expression
-  | (:-:) Expression
-          Expression
-  | (:&&:) Expression
-           Expression
-  | (:||:) Expression
-           Expression
-  | (:=>:) Expression
-           Expression
-  | (:<:) Expression
-          Expression
-  | (:<=:) Expression
-           Expression
-  | (:=:) Expression
-          Expression
+  | BinOp BinOp Expression Expression
   | Forall Variable
            Expression
   | Not Expression
@@ -72,28 +94,47 @@ data Expression
             Expression
   deriving (Eq)
 
-bool :: Bool -> Doc
-bool True = text "true"
-bool False = text "false"
-
-expr :: Expression -> Doc
-expr (IntVal i) = int i
-expr (BoolVal b) = bool b
-expr (Name name) = text name
-expr (Not x) = text "~" <> expr x
-expr (a :+: b) = lparen <> expr a <> text "+" <> expr b <> rparen
-expr (a :-: b) = lparen <> expr a <> text "-" <> expr b <> rparen
-expr (a :&&: b) = lparen <> expr a <> text "&&" <> expr b <> rparen
-expr (a :||: b) = lparen <> expr a <> text "||" <> expr b <> rparen
-expr (a :=>: b) = lparen <> expr a <> text "=>" <> expr b <> rparen
-expr (a :<: b) = lparen <> expr a <> text "<" <> expr b <> rparen
-expr (a :<=: b) = lparen <> expr a <> text "<=" <> expr b <> rparen
-expr (a :=: b) = lparen <> expr a <> text "=" <> expr b <> rparen
-expr (Forall x y) = lparen <> text "∀" <> text (show x) <> text "." <> expr y
-
 instance Show Expression where
-  show = render . expr
+  show x =
+    case x of
+      IntVal i -> show i
+      BoolVal b -> show b
+      Name s -> s
+      BinOp binOp e1 e2 -> "(" ++ show e1 ++ show binOp ++ show e2 ++ ")"
+      Forall var e -> "∀" ++ show var ++ "." ++ show e
+      Not e -> "¬" ++ show e
+      ArrayAt n e -> n ++ "[" ++ show e ++ "]"
 
+-- dsl to make expr building easier
+int :: Int -> Expression
+int = IntVal
+
+bool :: Bool -> Expression
+bool = BoolVal
+
+(+.) :: Expression -> Expression -> Expression
+e1 +. e2 =  BinOp Plus e1 e2
+
+(-.) :: Expression -> Expression -> Expression
+e1 -. e2 =  BinOp Min e1 e2
+
+(&&.) :: Expression -> Expression -> Expression
+e1 &&. e2 =  BinOp Conj e1 e2
+
+(||.) :: Expression -> Expression -> Expression
+e1 ||. e2 =  BinOp Disj e1 e2
+
+(==>) :: Expression -> Expression -> Expression
+e1 ==> e2 =  BinOp Impl e1 e2
+
+(<.) :: Expression -> Expression -> Expression
+e1 <. e2 =  BinOp Le e1 e2
+
+(<=.) :: Expression -> Expression -> Expression
+e1 <=. e2 =  BinOp Leq e1 e2
+
+(=.) :: Expression -> Expression -> Expression
+e1 =. e2 =  BinOp Eq e1 e2
 
 data Type
   = Prim PrimitiveType
