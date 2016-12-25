@@ -1,5 +1,4 @@
 module Logic where
-import Language (Expression(..), Name(..))
 
 --" a  => (b => c)  iff  a ^ b  => c"
 

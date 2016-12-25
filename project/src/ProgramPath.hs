@@ -2,11 +2,10 @@ module ProgramPath where
 
 import Language
 import Data.Monoid
-import Debug.Trace
 
 paths :: Int -> [Statement] -> [[Statement]]
-paths n [] = [[]]
-paths 0 xs = []
+paths _ [] = [[]]
+paths 0 _ = []
 paths n (If e s1 s2:xs) =
   let
     left = fmap (Assume e :) (paths (n - 1) (s1 <> xs))

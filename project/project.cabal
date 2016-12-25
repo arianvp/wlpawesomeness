@@ -15,6 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
+  ghc-options:     -Wall -Werror
   exposed-modules:     Language
                      , ProgramPath
                      , Wlp
@@ -22,14 +23,14 @@ library
                      , Logic
   build-depends:       base >= 4.7 && < 5
                      , containers
-                     , mtl
                      , pretty
+                     , uniplate
   default-language:    Haskell2010
 
 executable project-exe
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , project
                      , hspec
@@ -43,7 +44,8 @@ test-suite project-test
                      , project
                      , hspec
                      , containers
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+                     , uniplate
+  ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head

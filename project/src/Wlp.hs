@@ -2,15 +2,9 @@ module Wlp where
 
 import Language
 
-import Data.Monoid
-import Control.Applicative
-import Control.Monad.State (State)
-import Control.Monad.State.Class
-import Data.List (foldl', foldr1)
-import qualified Data.Set as Set (fromList, singleton, member)
-import Data.Set (Set, (\\))
-import qualified Data.Map as Map
-import Data.Map (Map, (!))
+-- import Data.List (foldl', foldr1)
+import qualified Data.Set as Set (member)
+import Data.Set (Set)
 
 fresh :: Name -> Set Name -> (Name, Name)
 fresh x taken = fresh' x
@@ -32,6 +26,8 @@ substitute name replaceBy postc =
     BinOp b x y ->
       BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
     Forall n b -> Forall n (substitute name replaceBy b)
+    Not e -> Not (substitute name replaceBy e)
+    ArrayAt _ _ -> error "Arrays are not implemented yet. TODO"
 
 -- TODO:
 -- 1. unshadow   -- program paths can go through a var
@@ -43,8 +39,10 @@ calcWlp (stmt:stmts) postc =
   case stmt of
     Skip -> calcWlp stmts postc
     Assert e -> e &&. calcWlp stmts postc
-    Assume e -> e ==> calcWlp stmts postc
+    Assume e -> e ==>. calcWlp stmts postc
     -- we _KNOW_ n if fresh due to preprocessing ,so
     -- this is safe
     Var n s -> foldr Forall (calcWlp s (calcWlp stmts postc)) n
     (n := e) -> substitute n e (calcWlp stmts postc)
+    While _ _ -> error "calcWlp only supports cannonical statements, no branching"
+    If _ _ _ -> error "calcWlp only supports cannonical statements, no branching"
