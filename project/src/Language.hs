@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Language
   ( Program(..)
@@ -9,14 +10,23 @@ module Language
   , PrimitiveType(..)
   , Array(..)
   , Type(..)
+  , BinOp(..)
   , (+.)
+  , pattern (:+:)
   , (-.)
+  , pattern (:-:)
   , (&&.)
+  , pattern (:&&:)
   , (||.)
+  , pattern (:||:)
   , (==>.)
+  , pattern (:==>:)
   , (<.)
+  , pattern (:<:)
   , (<=.)
+  , pattern (:<=:)
   , (=.)
+  , pattern (:=:)
   , int
   , bool
   , showStmts
@@ -155,27 +165,43 @@ bool = BoolVal
 
 (+.) :: Expression -> Expression -> Expression
 e1 +. e2 = BinOp Plus e1 e2
+pattern (:+:) :: Expression -> Expression -> Expression
+pattern (:+:) e1 e2 = BinOp Plus e1 e2
 
 (-.) :: Expression -> Expression -> Expression
 e1 -. e2 = BinOp Min e1 e2
+pattern (:-:) :: Expression -> Expression -> Expression
+pattern (:-:) e1 e2 = BinOp Min e1 e2
 
 (&&.) :: Expression -> Expression -> Expression
 e1 &&. e2 = BinOp Conj e1 e2
+pattern (:&&:) :: Expression -> Expression -> Expression
+pattern (:&&:) e1 e2 = BinOp Conj e1 e2
 
 (||.) :: Expression -> Expression -> Expression
 e1 ||. e2 = BinOp Disj e1 e2
+pattern (:||:) :: Expression -> Expression -> Expression
+pattern (:||:) e1 e2 = BinOp Disj e1 e2
 
 (==>.) :: Expression -> Expression -> Expression
 e1 ==>. e2 = BinOp Impl e1 e2
+pattern (:==>:) :: Expression -> Expression -> Expression
+pattern (:==>:) e1 e2 = BinOp Impl e1 e2
 
 (<.) :: Expression -> Expression -> Expression
 e1 <. e2 = BinOp Le e1 e2
+pattern (:<:) :: Expression -> Expression -> Expression
+pattern (:<:) e1 e2 = BinOp Le e1 e2
 
 (<=.) :: Expression -> Expression -> Expression
 e1 <=. e2 = BinOp Leq e1 e2
+pattern (:<=:) :: Expression -> Expression -> Expression
+pattern (:<=:) e1 e2 = BinOp Leq e1 e2
 
 (=.) :: Expression -> Expression -> Expression
 e1 =. e2 = BinOp Eq e1 e2
+pattern (:=:) :: Expression -> Expression -> Expression
+pattern (:=:) e1 e2 = BinOp Eq e1 e2
 
 data Type
   = Prim PrimitiveType

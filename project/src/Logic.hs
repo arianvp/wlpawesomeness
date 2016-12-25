@@ -1,15 +1,9 @@
+{-#LANGUAGE PatternSynonyms #-}
 module Logic where
-
---" a  => (b => c)  iff  a ^ b  => c"
-
-
-{-toConj :: Expression -> Expression
-toConj (a :=>: (b :=>: c)) = toConj ((a :&&: b) :=>: c)
-toConj (a :=>: b) = a :=>: b
-toConu a = a
+import Language
 
 
-transform :: Expression -> Expression
-transform (e1 :=>: (e2 :=>: e3)) = e1 :&&: transform (e2 :=>: e3)
-transform (e1 :=>: e2) = e1 :=>: e2
-transform e = e -}
+normalize :: Expression -> Expression
+normalize (e1 :==>: (e2 :==>: e3)) = e1 :&&: normalize (e2 :==>: e3)
+normalize (e1 :==>: e2) = e1 :==>: e2
+normalize e = e
