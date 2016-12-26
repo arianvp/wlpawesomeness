@@ -38,9 +38,9 @@ import Data.Generics.Uniplate.Data ()
 import Text.PrettyPrint hiding (int)
 
 data Program =
-  Program [Parameter] -- ^ input parameters
-          [Parameter] -- ^ output parameters
-          [Statement] -- ^ body
+  Program [Parameter]
+          [Parameter]
+          [Statement]
   deriving (Eq, Data, Typeable)
 
 prgrm :: Program -> Doc
@@ -72,6 +72,8 @@ data Statement
 instance Show Statement where
   show x = render (stmt x)
 
+instance {-#OVERLAPS#-} Show [Statement] where
+  show = showStmts
 showStmts :: [Statement] -> String
 showStmts = render . stmts
 
@@ -80,8 +82,8 @@ stmts ss = vcat $ punctuate (text ";") (map stmt ss)
 
 stmt :: Statement -> Doc
 stmt Skip = text "skip"
-stmt (Assert expr) = text "assert" <> text (show expr)
-stmt (Assume expr) = text "assume" <> text (show expr)
+stmt (Assert expr) = text "assert " <> text (show expr)
+stmt (Assume expr) = text "assume " <> text (show expr)
 stmt (If e s1 s2) =
   text "if(" <> text (show e) <> text "){" $$ nest 2 (stmts s1) $$
   text "} else {" $$

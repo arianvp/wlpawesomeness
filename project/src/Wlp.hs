@@ -33,6 +33,8 @@ substitute name replaceBy postc =
 -- 1. unshadow   -- program paths can go through a var
 -- 2. programpaths
 -- 3. wlp
+--
+newtype Wlp = Wlp Expression
 calcWlp :: [Statement] -> Expression -> Expression
 calcWlp [] postc = postc
 calcWlp (stmt:stmts) postc =

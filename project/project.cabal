@@ -21,10 +21,12 @@ library
                      , Wlp
                      , Unshadow
                      , Logic
+                     , Property
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , pretty
                      , uniplate
+                     , QuickCheck
   default-language:    Haskell2010
 
 executable project-exe
@@ -45,6 +47,7 @@ test-suite project-test
                      , hspec
                      , containers
                      , uniplate
+                     , QuickCheck
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
