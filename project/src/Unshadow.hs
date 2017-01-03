@@ -1,4 +1,6 @@
-module Unshadow where
+module Unshadow
+( unshadow
+) where
 
 import Language
 import Data.Map (Map)
@@ -7,13 +9,14 @@ import qualified Data.Map as Map
 variableToName :: Variable -> (Name, Name)
 variableToName (Variable name _) = (name, name)
 
-unshadowProgram :: Program -> Program
+{-unshadowProgram :: Program -> Program
 unshadowProgram (Program inputs outputs statements) =
   let inputNames = map variableToName inputs
       outputNames = map variableToName outputs
       names = (Map.fromList (inputNames ++ outputNames))
       newStatements = unshadowStmts names statements
-  in Program inputs outputs newStatements
+  in Program inputs outputs newStatement
+-}
 
 {-
  - e(x|y) {
@@ -45,6 +48,9 @@ unshadowExpr names e =
     Not e' -> Not (unshadowExpr names e')
     ArrayAt _ _ -> error "Arrays not implemented yet"
 
+unshadow :: [Statement] -> [Statement]
+unshadow = unshadowStmts Map.empty
+
 unshadowStmts :: Map Name Name -> [Statement] -> [Statement]
 unshadowStmts takenNames = unshadow'
   where
@@ -63,9 +69,9 @@ unshadowStmts takenNames = unshadow'
                  Nothing -> Variable name typ
                  Just n -> Variable n typ
           renamedVars = map setName vars
-          lol = (Map.union renames takenNames)
-          renamedStmts = unshadowStmts lol stmts
-      in Var renamedVars renamedStmts : unshadow' xs
+          takenNames' = (Map.union renames takenNames)
+          renamedStmts = unshadowStmts takenNames' stmts
+      in Var renamedVars renamedStmts : unshadowStmts takenNames' xs
     unshadow' ((name := e):xs) =
       case Map.lookup name takenNames of
         Nothing -> (name := unshadowExpr takenNames e) : unshadow' xs

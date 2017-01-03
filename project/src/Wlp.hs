@@ -35,6 +35,7 @@ substitute name replaceBy postc =
 -- 3. wlp
 --
 newtype Wlp = Wlp Expression
+
 calcWlp :: [Statement] -> Expression -> Expression
 calcWlp [] postc = postc
 calcWlp (stmt:stmts) postc =
@@ -44,7 +45,8 @@ calcWlp (stmt:stmts) postc =
     Assume e -> e ==>. calcWlp stmts postc
     -- we _KNOW_ n if fresh due to preprocessing ,so
     -- this is safe
-    Var n s -> foldr Forall (calcWlp s (calcWlp stmts postc)) n
+    Var _n _s -> error "calcWlp only supports cannonical statements, no foralls"
+      -- foldr Forall (calcWlp s (calcWlp stmts postc)) n
     (n := e) -> substitute n e (calcWlp stmts postc)
     While _ _ -> error "calcWlp only supports cannonical statements, no branching"
     If _ _ _ -> error "calcWlp only supports cannonical statements, no branching"

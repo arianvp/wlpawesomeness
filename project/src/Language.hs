@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Language
   ( Program(..)
@@ -30,6 +31,7 @@ module Language
   , int
   , bool
   , showStmts
+  , programToStmt
   ) where
 
 import Data.Data (Data)
@@ -53,6 +55,11 @@ prgrm (Program ins outs s) =
 
 instance Show Program where
   show = render . prgrm
+
+
+programToStmt :: Program -> [Statement]
+programToStmt (Program ins outs s) =
+  [Var (ins ++ outs) s]
 
 data Statement
   = Skip
@@ -95,7 +102,8 @@ stmt (a := b) = text a <> text " := " <> text (show b)
 stmt (Var vars s) =
   text "var(" <> (hcat $ punctuate (text ",") (map (text . show) vars)) <>
   text "){" $$
-  nest 2 (stmts s)
+  nest 2 (stmts s) $$ 
+  text "}"
 
 type Name = String
 
