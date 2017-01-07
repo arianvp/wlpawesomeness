@@ -8,6 +8,7 @@ import qualified ProgramPath
 import Language
 import Data.Generics.Uniplate.Operations
 
+import Verify 
 exampleE :: [Statement]
 exampleE =
   [ Var
@@ -173,3 +174,5 @@ main =
                          While {} -> False
                          _ -> True)
      describe "Wlp.calcWlp" $  pure ()
+
+     verifyProgram "exampleE" exampleE

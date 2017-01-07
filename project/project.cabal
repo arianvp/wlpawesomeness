@@ -22,6 +22,8 @@ library
                      , Unshadow
                      , Logic
                      , Property
+                     , Substitute
+                     , Eval
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , pretty
@@ -44,6 +46,7 @@ test-suite project-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       Verify
   build-depends:       base
                      , project
                      , hspec
