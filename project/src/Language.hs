@@ -45,6 +45,7 @@ data Program =
           [Statement]
   deriving (Eq, Data, Typeable)
 
+
 prgrm :: Program -> Doc
 prgrm (Program ins outs s) =
   text "(" <> (hcat $ punctuate (text ",") (map (text . show) ins)) <> text "|" <>

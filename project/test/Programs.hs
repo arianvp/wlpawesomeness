@@ -56,6 +56,12 @@ minind =
       ]
   ]
 
+-- the programs to verify
 spec :: Spec
 spec = do
-  verifyProgram "exampleE" exampleE
+  verifyProgram 5 "a test if forall works"
+    [ Assume (Name "x" :=: IntVal 0)
+    , Assert (Forall (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
+    ]
+  verifyProgram 2 "exampleE" exampleE
+  

@@ -8,7 +8,7 @@ import Substitute
 import Eval
 
 prop :: Monad m => [(Name, Series m Expression)] -> (Expression -> Property m)
-prop = foldr (accumulate . uncurry transformSeries) (forAll . evalBool)
+prop = foldr (accumulate . uncurry transformSeries) (evalProp)
   where
     transformSeries :: Name -> Series m Expression -> Series m (Name, Expression)
     transformSeries a = fmap (a,)

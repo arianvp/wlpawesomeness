@@ -44,7 +44,11 @@ unshadowExpr names e =
       case Map.lookup n names of
         Nothing -> Name n
         Just n' -> Name n'
-    Forall _n _e -> error "wtf should I do here"
+    Forall (Variable n t) e' ->
+      -- make sure that n is renamed
+      case Map.lookup n names of
+        Nothing -> Forall (Variable n t) e'
+        Just n' -> Forall (Variable n' t) (unshadowExpr names e')
     Not e' -> Not (unshadowExpr names e')
     ArrayAt n e' ->
       case Map.lookup n names of

@@ -1,5 +1,35 @@
+{-#LANGUAGE TupleSections #-}
 module Eval where
 import Language
+import Substitute
+import Test.SmallCheck
+import Test.SmallCheck.Series
+
+evalProp :: Monad m => Expression -> Property m
+evalProp (BinOp Impl a b) = evalProp a ==> evalProp b
+evalProp (BinOp x a b) = forAll (evalBool (BinOp x a b))
+evalProp (Forall (Variable name typ) a) =
+  case typ of
+    Prim Int ->
+      let
+        namedSeries :: Monad m => Series m (Name, Int)
+        namedSeries =  fmap (name,) series
+        f :: (Name, Int) -> Bool
+        f (_, x) = evalBool $ substitute name (IntVal x) a
+      in
+        over namedSeries f
+    Prim Bool ->
+      let
+        namedSeries :: Monad m => Series m (Name, Bool)
+        namedSeries =  fmap (name,) series
+        g :: (Name, Bool) -> Bool
+        g (_, x) = evalBool $ substitute name (BoolVal x) a
+      in
+        over namedSeries g
+    _ -> error "array in ForAll not supported"
+evalProp (Not _) = undefined
+evalProp _ = error "this is not a predicate"
+
 evalBool :: Expression -> Bool
 evalBool e =
   let (BoolVal b) = eval e
