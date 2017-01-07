@@ -1,3 +1,4 @@
+{-#LANGUAGE MonadComprehensions #-}
 module Verify where
 
 import Test.Hspec
@@ -8,6 +9,8 @@ import Wlp
 import Property
 import ProgramPath
 import Unshadow
+import Test.Hspec.SmallCheck
+import Test.SmallCheck.Series
 
 verifyProgram :: Name -> [Statement] -> Spec
 verifyProgram name body =
@@ -15,4 +18,4 @@ verifyProgram name body =
     let
       wlps = map (normalize . flip wlp (BoolVal True)) . paths 20 . unshadow $ body
     in
-      mapM_ (\x -> it ("wlp = " ++ show x) (prop [("x", intGen)] x)) wlps
+      mapM_ (\x -> it ("wlp = " ++ show x) (property (prop [("x", [ IntVal x | x <- series])] x))) wlps
