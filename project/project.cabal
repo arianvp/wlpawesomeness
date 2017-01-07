@@ -28,6 +28,7 @@ library
                      , uniplate
                      , QuickCheck
                      , range
+                     , random
   default-language:    Haskell2010
 
 executable project-exe

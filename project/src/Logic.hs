@@ -2,8 +2,9 @@
 {-#LANGUAGE PatternSynonyms #-}
 module Logic where
 import Language
---import Data.Range.Range
+import Data.Range.Range
 import Test.QuickCheck
+import System.Random
 
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
@@ -96,6 +97,23 @@ prop
           . substitute d d'
           $ expr
 -}
+
+
+rangeToGen
+  :: (Random a, Bounded a, Arbitrary a)
+  => Range a -> Gen a
+rangeToGen r =
+  case r of
+    SingletonRange x -> pure x
+    SpanRange from to -> choose (from, to)
+    LowerBoundRange lower -> choose (lower, maxBound)
+    UpperBoundRange upper -> choose (minBound, upper)
+    InfiniteRange -> arbitrary
+
+rangesToGen
+  :: (Random a, Bounded a, Arbitrary a)
+  => [Range a] -> Gen a
+rangesToGen = oneof . map rangeToGen
 
 -- turns an arbitrary expression into a quickcheck property
 -- based on a list of generators
