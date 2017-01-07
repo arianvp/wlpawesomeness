@@ -45,20 +45,6 @@ normalize (e1 :+: e2) = normalize e1 :+: normalize e2
 
 normalize e = e
 
--- given that we know how to generate free variables,
--- lets go and make a quickcheck property
---
---
-
-
-{-prop :: Map Name (Gen Expression) -> Expression -> Property
-prop gens e = foldlWithKey f _ gens
-  where
-    f :: Property -> Name -> Gen Expression -> Property
-    f prop name gen =
-      forAll gen $ \x -> prop .&&. (eval
--}
-
 substitute :: Name -> Expression -> Expression -> Expression
 substitute name replaceBy postc =
   case postc of
@@ -129,6 +115,12 @@ prop = foldr (accumulate . uncurry transformGen) (property . evalBool)
       -> (Expression -> Property)
     accumulate gen accum inExpr =
       forAll gen $ \(name, byExpr) -> accum $ substitute name byExpr inExpr
+
+boolGen :: Gen Expression
+boolGen = fmap BoolVal arbitrary
+
+intGen :: Gen Expression
+intGen = fmap IntVal arbitrary
 
 evalBool :: Expression -> Bool
 evalBool e =
