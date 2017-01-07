@@ -1,8 +1,9 @@
+{-#LANGUAGE TupleSections #-}
 {-#LANGUAGE PatternSynonyms #-}
 module Logic where
 import Language
 --import Data.Range.Range
-import Data.Map
+import Test.QuickCheck
 
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
@@ -43,40 +44,114 @@ normalize (e1 :+: e2) = normalize e1 :+: normalize e2
 
 normalize e = e
 
-eval :: Map Name Expression -> Expression -> Expression
-eval vals (Name x) = vals ! x
-eval _ (IntVal x) =  IntVal x
-eval _ (BoolVal x) =  BoolVal x
-eval n (BinOp Plus a b) =
-  let IntVal a' = eval n a
-      IntVal b' = eval n b
+-- given that we know how to generate free variables,
+-- lets go and make a quickcheck property
+--
+--
+
+
+{-prop :: Map Name (Gen Expression) -> Expression -> Property
+prop gens e = foldlWithKey f _ gens
+  where
+    f :: Property -> Name -> Gen Expression -> Property
+    f prop name gen =
+      forAll gen $ \x -> prop .&&. (eval
+-}
+
+substitute :: Name -> Expression -> Expression -> Expression
+substitute name replaceBy postc =
+  case postc of
+    Name x ->
+      if x == name
+        then replaceBy
+        else Name x
+    IntVal x -> IntVal x
+    BoolVal x -> BoolVal x
+    BinOp b x y ->
+      BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
+    Forall n b -> Forall n (substitute name replaceBy b)
+    Not e -> Not (substitute name replaceBy e)
+    ArrayAt _ _ -> error "Arrays are not implemented yet. TODO"
+
+-- todo: generalize this?
+{-
+ - Generalizes the following pattern:
+prop :: [(Name, Gen Expression)] -> Expression -> Property
+prop
+  [ (a, aGen)
+  , (b, bGen)
+  , (c, cGen)
+  , (d, dGen)
+  ]
+  expr
+  =
+  forAll aGen $ \a' ->
+    forAll bGen $ \b' ->
+      forAll cGen $ \c' ->
+        forAll dGen $ \d' ->
+          evalBool
+          . substitute a a'
+          . substitute b b'
+          . substitute c c'
+          . substitute d d'
+          $ expr
+-}
+
+-- turns an arbitrary expression into a quickcheck property
+-- based on a list of generators
+prop :: [(Name, Gen Expression)] -> (Expression -> Property)
+prop = foldr (accumulate . uncurry transformGen) (property . evalBool)
+  where
+    transformGen :: Name -> Gen Expression -> Gen (Name, Expression)
+    -- pairs each generated expression with the name to substitute
+    transformGen a = fmap (a, )
+    accumulate
+      :: Gen (Name, Expression)
+      -> (Expression -> Property)
+      -> (Expression -> Property)
+    accumulate gen accum inExpr =
+      forAll gen $ \(name, byExpr) -> accum $ substitute name byExpr inExpr
+
+evalBool :: Expression -> Bool
+evalBool e =
+  let (BoolVal b) = eval e
+  in b
+
+  -- fuck that
+eval :: Expression -> Expression
+eval (Name _) = error "free variable"
+eval (IntVal x) =  IntVal x
+eval (BoolVal x) =  BoolVal x
+eval (BinOp Plus a b) =
+  let IntVal a' = eval a
+      IntVal b' = eval b
   in IntVal (a' + b')
-eval n (BinOp Min a b) =
-  let IntVal a' = eval n a
-      IntVal b' = eval n b
+eval (BinOp Min a b) =
+  let IntVal a' = eval a
+      IntVal b' = eval b
   in IntVal (a' - b')
-eval n (BinOp Conj a b) =
-  let BoolVal a' = eval n a
-      BoolVal b' = eval n b
+eval (BinOp Conj a b) =
+  let BoolVal a' = eval a
+      BoolVal b' = eval b
   in BoolVal (a' && b')
-eval n (BinOp Disj a b) =
-  let BoolVal a' = eval n a
-      BoolVal b' = eval n b
+eval (BinOp Disj a b) =
+  let BoolVal a' = eval a
+      BoolVal b' = eval b
   in BoolVal (a' || b')
-eval n (BinOp Impl a b) =
-  let BoolVal a' = eval n a
-      BoolVal b' = eval n b
+eval (BinOp Impl a b) =
+  let BoolVal a' = eval a
+      BoolVal b' = eval b
   in BoolVal (b' <= a')
-eval n (BinOp Le a b) =
-  let IntVal a' = eval n a
-      IntVal b' = eval n b
-  in BoolVal (b' < a')
-eval n (BinOp Leq a b) =
-  let IntVal a' = eval n a
-      IntVal b' = eval n b
-  in BoolVal (b' <= a')
-eval n (BinOp Eq a b) =
-  case (eval n a, eval n b) of
+eval (BinOp Le a b) =
+  let IntVal a' = eval a
+      IntVal b' = eval b
+  in BoolVal (a' < b')
+eval (BinOp Leq a b) =
+  let IntVal a' = eval a
+      IntVal b' = eval b
+  in BoolVal (a' <= b')
+eval (BinOp Eq a b) =
+  case (eval a, eval b) of
     (BoolVal a', BoolVal b') ->
       BoolVal (a' == b')
     (IntVal a', IntVal b') ->
@@ -84,9 +159,9 @@ eval n (BinOp Eq a b) =
     _ -> error "type error"
 -- TODO this is a harder one, we want to try
 -- several values of a. quickcheck
-eval n (Forall _ b) =
-  eval n b
-eval n (Not e) =
-  let BoolVal e' = eval n e
+eval (Forall _ b) =
+  eval b
+eval (Not e) =
+  let BoolVal e' = eval e
   in BoolVal (not e')
-eval _ (ArrayAt _ _) = error "todo array"
+eval (ArrayAt _ _) = error "todo array"
