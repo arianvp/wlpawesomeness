@@ -27,6 +27,7 @@ library
                      , pretty
                      , uniplate
                      , QuickCheck
+                     , range
   default-language:    Haskell2010
 
 executable project-exe

@@ -6,8 +6,8 @@ import Language
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-variableToName :: Variable -> (Name, Name)
-variableToName (Variable name _) = (name, name)
+{-variableToName :: Variable -> (Name, Name)
+variableToName (Variable name _) = (name, name)-}
 
 {-unshadowProgram :: Program -> Program
 unshadowProgram (Program inputs outputs statements) =
@@ -46,7 +46,11 @@ unshadowExpr names e =
         Just n' -> Name n'
     Forall _n _e -> error "wtf should I do here"
     Not e' -> Not (unshadowExpr names e')
-    ArrayAt _ _ -> error "Arrays not implemented yet"
+    ArrayAt n e' ->
+      case Map.lookup n names of
+        Nothing -> ArrayAt n (unshadowExpr names e')
+        Just n' -> ArrayAt n' (unshadowExpr names e')
+
 
 unshadow :: [Statement] -> [Statement]
 unshadow = unshadowStmts Map.empty
