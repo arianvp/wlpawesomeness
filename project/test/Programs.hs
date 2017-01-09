@@ -3,6 +3,7 @@ module Programs where
 import Test.Hspec
 import Language
 import Verify
+import qualified Series
 
 exampleE :: [Statement]
 exampleE =
@@ -59,9 +60,12 @@ minind =
 -- the programs to verify
 spec :: Spec
 spec = do
-  verifyProgram 5 "a test if forall works"
+  verifyProgram 5 "a test if forall works" [("x", Series.ints)]
     [ Assume (Name "x" :=: IntVal 0)
     , Assert (Forall (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
     ]
-  verifyProgram 2 "exampleE" exampleE
+  -- TODO write a function freeVars, that automatically gives the series
+  -- of a wlp
+  verifyProgram 2 "exampleE"  [("x", Series.ints)] exampleE
+  verifyProgram 5 "minind" [("x", Series.ints)]  minind
   

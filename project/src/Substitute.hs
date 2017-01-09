@@ -1,7 +1,10 @@
+{-#LANGUAGE KindSignatures #-}
+{-#LANGUAGE TypeOperators #-}
 module Substitute where
 import Language
 import qualified Data.Set as Set
 import Data.Set (Set)
+import GHC.Stack
 
 fresh :: Name -> Set Name -> (Name, Name)
 fresh x taken = fresh' x
@@ -11,11 +14,11 @@ fresh x taken = fresh' x
         then fresh' (y ++ "'")
         else (x, y)
 
-substitute :: Name -> Expression -> Expression -> Expression
+substitute ::  HasCallStack => Expression -> Expression -> Expression -> Expression
 substitute name replaceBy postc =
   case postc of
     Name x ->
-      if x == name
+      if Name x == name
         then replaceBy
         else Name x
     IntVal x -> IntVal x
@@ -24,4 +27,7 @@ substitute name replaceBy postc =
       BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
     Forall n b -> Forall n (substitute name replaceBy b)
     Not e -> Not (substitute name replaceBy e)
-    ArrayAt _ _ -> error "Arrays are not implemented yet. TODO"
+    ArrayAt n i ->
+      if ArrayAt n i == name
+          then replaceBy
+          else ArrayAt n i

@@ -18,4 +18,4 @@ prop = foldr (accumulate . uncurry transformSeries) (evalProp)
       -> (Expression -> Property m)
       -> (Expression -> Property m)
     accumulate series' accum inExpr =
-      over series' $ \(name, byExpr) -> accum $ substitute name byExpr inExpr
+      over series' $ \(name, byExpr) -> accum $ substitute (Name name) byExpr inExpr

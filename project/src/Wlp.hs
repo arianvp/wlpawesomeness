@@ -2,8 +2,9 @@ module Wlp where
 
 import Language
 import Substitute
+import GHC.Stack
 
-wlp :: [Statement] -> Expression -> Expression
+wlp :: HasCallStack => [Statement] -> Expression -> Expression
 wlp [] postc = postc
 wlp (stmt:stmts) postc =
   case stmt of
@@ -14,6 +15,7 @@ wlp (stmt:stmts) postc =
     -- this is safe
     Var _n _s -> error "wlp only supports cannonical statements, no vars"
       -- foldr Forall (calcWlp s (calcWlp stmts postc)) n
-    (n := e) -> substitute n e (wlp stmts postc)
+    -- TODO: arrays
+    (n := e) -> substitute (Name n) e (wlp stmts postc)
     While _ _ -> error "wlp only supports cannonical statements, no branching"
     If _ _ _ -> error "wlp only supports cannonical statements, no branching"
