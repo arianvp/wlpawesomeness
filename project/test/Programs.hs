@@ -54,18 +54,28 @@ minind =
                   [Skip]
               ]
           ]
+      , Assert (Forall (Variable "i" (Prim Int)) (ArrayAt "a" (Name "r") :<=: ArrayAt "a" (Name "i")))
       ]
   ]
 
 -- the programs to verify
 spec :: Spec
 spec = do
-  verifyProgram 5 "a test if forall works" [("x", Series.ints)]
+  verifyProgram 5 "a test if forall works" [(Name "x", Series.ints)]
     [ Assume (Name "x" :=: IntVal 0)
     , Assert (Forall (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
     ]
   -- TODO write a function freeVars, that automatically gives the series
   -- of a wlp
-  verifyProgram 2 "exampleE"  [("x", Series.ints)] exampleE
-  verifyProgram 5 "minind" [("x", Series.ints)]  minind
+  verifyProgram 2 "exampleE"  [(Name "x", Series.ints)] exampleE
+  verifyProgram
+    5
+    "minind"
+    [ (Name "x", Series.ints)
+    , (ArrayAt "a" (Name "i") , Series.ints)
+    , (Name "i", Series.ints)
+    , (Name "N", Series.ints)
+    , (Name "r", Series.ints)
+    ]
+    minind
   

@@ -20,6 +20,32 @@ spec =
   do describe "Unshadow.unshadow" $
        do it "exampleE has no shadowed variables" $
             Unshadow.unshadow Programs.exampleE `shouldBe` Programs.exampleE
+          it "minind should quantiy over a different i in the postcondition" $ do
+            let
+              pbefore = Programs.minind
+              pafter = 
+                [ Var
+                    [ Variable "a" (ArrayT (Array Int))
+                    , Variable "i" (Prim Int)
+                    , Variable "N" (Prim Int)
+                    , Variable "r" (Prim Int)
+                    ]
+                    [ Var
+                        [Variable "min" (Prim Int)]
+                        [ "min" := ArrayAt "a" (Name "i")
+                        , "r" := Name "i"
+                        , While
+                            (Name "i" :<: Name "N")
+                            [ If
+                                (ArrayAt "a" (Name "i") :<: Name "min")
+                                ["min" := ArrayAt "a" (Name "i"), "r" := Name "i"]
+                                [Skip]
+                            ]
+                        ]
+                    , Assert (Forall (Variable "i'" (Prim Int)) (ArrayAt "a" (Name "r") :<=: ArrayAt "a" (Name "i'")))
+                    ]
+                ]
+            Unshadow.unshadow pbefore `shouldBe` pafter
           it "an example of unshadowing" $
             do let pbefore =
                      [ Var

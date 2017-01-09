@@ -4,6 +4,7 @@ import Language
 import Substitute
 import Test.SmallCheck
 import Test.SmallCheck.Series
+import GHC.Stack
 
 evalProp :: Monad m => Expression -> Property m
 evalProp (BinOp Impl a b) = evalProp a ==> evalProp b
@@ -57,7 +58,6 @@ evalBool e =
   let (BoolVal b) = eval e
   in b
 
-  -- fuck that
 eval :: Expression -> Expression
 eval (Name _) = error "free variable"
 eval (IntVal x) =  IntVal x

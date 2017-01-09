@@ -12,7 +12,7 @@ import Unshadow
 import Test.Hspec.SmallCheck
 import Test.SmallCheck.Series
 
-verifyProgram :: Int -> Name -> [(Name, Series IO Expression)] -> [Statement] -> Spec
+verifyProgram :: Int -> Name -> [(Expression, Series IO Expression)] -> [Statement] -> Spec
 verifyProgram depth name series' body =
   describe ("\n" ++ name ++ "\n" ++ show body ++ "\n") $
     let

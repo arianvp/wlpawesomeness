@@ -5,6 +5,7 @@ module Unshadow
 import Language
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Control.Monad.State
 
 {-variableToName :: Variable -> (Name, Name)
 variableToName (Variable name _) = (name, name)-}
@@ -34,157 +35,81 @@ fresh x taken = fresh' x
 mappingToList :: Map Name Name -> [Name]
 mappingToList m = Map.elems m ++ Map.keys m
 
-unshadowExpr :: Map Name Name -> Expression -> Expression
-unshadowExpr names e =
-  case e of
-    IntVal x -> IntVal x
-    BoolVal x -> BoolVal x
-    BinOp b e1 e2 -> BinOp b (unshadowExpr names e1) (unshadowExpr names e2)
-    Name n ->
-      case Map.lookup n names of
-        Nothing -> Name n
-        Just n' -> Name n'
-    Forall (Variable n t) e' ->
-      -- make sure that n is renamed
-      case Map.lookup n names of
-        Nothing -> Forall (Variable n t) e'
-        Just n' -> Forall (Variable n' t) (unshadowExpr names e')
-    Not e' -> Not (unshadowExpr names e')
-    ArrayAt n e' ->
-      case Map.lookup n names of
-        Nothing -> ArrayAt n (unshadowExpr names e')
-        Just n' -> ArrayAt n' (unshadowExpr names e')
+
+unshadowExpr :: Expression -> State (Map Name Name) Expression
+unshadowExpr (IntVal x) = pure (IntVal x)
+unshadowExpr (BoolVal x) = pure (BoolVal x)
+unshadowExpr (BinOp op e1 e2) = do
+  e1' <- unshadowExpr e1
+  e2' <- unshadowExpr e2
+  pure (BinOp op e1' e2')
+unshadowExpr (Name n) = do
+  names <- get
+  case Map.lookup n names of
+    Nothing -> pure (Name n)
+    Just n' -> pure (Name n')
+unshadowExpr (Forall var e) = do
+  var' <- unshadowVariable var
+  e' <- unshadowExpr e
+  pure (Forall var' e')
+unshadowExpr (Not e) = do
+  e' <- unshadowExpr e
+  pure (Not e')
+unshadowExpr (ArrayAt n e) = do
+  names <- get
+  e' <- unshadowExpr e
+  case Map.lookup n names of
+    Nothing -> pure (ArrayAt n e')
+    Just n' -> pure (ArrayAt n' e')
 
 
 unshadow :: [Statement] -> [Statement]
-unshadow = unshadowStmts Map.empty
-
-unshadowStmts :: Map Name Name -> [Statement] -> [Statement]
-unshadowStmts takenNames = unshadow'
-  where
-    unshadow' [] = []
-    -- (x,x) (y,y)
-    unshadow' (Var vars stmts:xs) =
-      let findNewName :: Variable -> (Name, Name)
-          findNewName (Variable name _typ) =
-            fresh name (mappingToList takenNames)
-          -- a map of renames
-          renames :: Map Name Name
-          renames = Map.fromList (map findNewName vars)
-          setName (Variable name typ) =
-            let newName = Map.lookup name renames
-            in case newName of
-                 Nothing -> Variable name typ
-                 Just n -> Variable n typ
-          renamedVars = map setName vars
-          takenNames' = (Map.union renames takenNames)
-          renamedStmts = unshadowStmts takenNames' stmts
-      in Var renamedVars renamedStmts : unshadowStmts takenNames' xs
-    unshadow' ((name := e):xs) =
-      case Map.lookup name takenNames of
-        Nothing -> (name := unshadowExpr takenNames e) : unshadow' xs
-        Just newName -> ((newName := unshadowExpr takenNames e) : unshadow' xs)
-    unshadow' (Skip:xs) = Skip : unshadow' xs
-    unshadow' (Assert e:xs) = Assert (unshadowExpr takenNames e) : unshadow' xs
-    unshadow' (Assume e:xs) = Assume (unshadowExpr takenNames e) : unshadow' xs
-    unshadow' (If e s1 s2:xs) =
-      If (unshadowExpr takenNames e) (unshadow' s1) (unshadow' s2) : unshadow' xs
-    unshadow' (While e s:xs) =
-      While (unshadowExpr takenNames e) (unshadow' s) : unshadow' xs
-{-
-program(x|y) {
-  x := 1;        --  [(x,x),(y,y)]  []
-  y := 3;
-  var x in {  unshadowVar (variables + (x,x') }
-
-    assert x'
-    var y in {
-      assert x < 4
-    }
-    assert x';
-  }
-  variables - [(x,x), (y,y)]
-  x = 5;
-}
--}
-{-
-weExpectYWithTwoPrimes =
-  Program [Variable "x" (Prim Int)] [Variable "y" (Prim Int)]
-   ["x" := IntVal 1
-   ,"y" := IntVal 3
-   , Var [Variable "y" (Prim Int)]
-     [ Assert (Name "x")
-     , Var [Variable "y" (Prim Int)]
-       [ Assert (Name "y") ]
-     ]
-   ]
-
--- Var:y:xs
-weExpectYWithTwoPrimesInBothCases =
-  Program [Variable "x" (Prim Int)] [Variable "y" (Prim Int)]
-   ["x" := IntVal 1
-   ,"y" := IntVal 3
-   , Var [Variable "y" (Prim Int)]  -- y'
-     [ Assert (Name "x")
-     , Var [Variable "y" (Prim Int)] -- y''
-       [ Assert (Name "y") ]
-     ]
-   , "y" := IntVal 3 -- y
-   , Var [Variable "y" (Prim Int)]   -- y'
-     [ Assert (Name "x")
-     , Var [Variable "y" (Prim Int)] -- y''
-       [ Assert (Name "y") ]
-     ]
-   ,  "y" := IntVal 5 -- y  BUT NOT: y''''
-   , Assert (Name "x" :=: IntVal 3)
-   ]
+unshadow xs = evalState (unshadow' xs) Map.empty
 
 
-lol =
-  Program [Variable "x" (Prim Int)] [Variable "y" (Prim Int)]
-  [ "x" := IntVal 1
-  , Var [Variable "y" (Prim Int)]
-    [ "y" := IntVal 1
-    , Var [Variable "y" (Prim Int)]
-      [ "y" := IntVal 3
-      , "x" := (Name "x" :+: Name "y")
-      , Assert (Name "x" :=: IntVal 4)
-      ]
-    ]
-  , "y" := Name "x"
-  , Var [Variable "y" (Prim Int)]
-    [ "y" := IntVal 1
-    , Var [Variable "y" (Prim Int)]
-      [ "y" := IntVal 3
-      , "x" := (Name "x" :+: Name "y")
-      , Assert (Name "x" :=: IntVal 7)
-      ]
-    ]
-  , Assert (Name "x" :=: IntVal 7)
-  , "y" := Name "x"
-  ]
+unshadowVariable :: Variable -> State (Map Name Name) Variable
+unshadowVariable (Variable name typ) = do
+  names <- get
+  let (_, newName) = fresh name (mappingToList names)
+  put (Map.insert name newName names)
+  pure (Variable newName typ)
 
--}
---
---e(x|y) {
---var y {
---}
---var y {
---}
---}
--- e(x|y) {
--- x := 1
--- assert x=1
--- var y' {
---  y := 1
---  assert y=1
---  var y {
---    y := 3
---    x := x + y
---    assert x=4
---  }
--- }
--- assert x = 4
--- y := x
--- }
---
+unshadow' :: [Statement] -> State (Map Name Name) [Statement]
+unshadow' [] = pure []
+unshadow' (Var vars stmts:xs) = do
+  vars' <- mapM unshadowVariable vars
+  stmts' <- unshadow' stmts
+  xs' <- unshadow' xs
+  pure (Var vars' stmts':xs')
+unshadow' ((name := e):xs) = do
+  names <- get
+  e' <- unshadowExpr e
+  xs' <- unshadow' xs
+  case Map.lookup name names of
+    Nothing ->
+      pure ((name := e'):xs')
+    Just name' ->
+      pure ((name' := e'):xs')
+unshadow' (Skip:xs) = do
+  xs' <- unshadow' xs
+  pure (Skip:xs')
+unshadow' (Assert e:xs) = do
+  e' <- unshadowExpr e
+  xs' <- unshadow' xs
+  pure (Assert e' : xs')
+unshadow' (Assume e:xs) = do
+  e' <- unshadowExpr e
+  xs' <- unshadow' xs
+  pure (Assume e' : xs')
+unshadow' (If e s1 s2:xs) = do
+  e' <- unshadowExpr e
+  s1' <- unshadow' s1
+  s2' <- unshadow' s2
+  xs' <- unshadow' xs
+  pure (If e' s1' s2': xs')
+
+unshadow' (While e s1:xs) = do
+  e' <- unshadowExpr e
+  s1' <- unshadow' s1
+  xs' <- unshadow' xs
+  pure (While e' s1': xs')
