@@ -49,6 +49,7 @@ evalProp (Not (Forall (Variable name typ) a)) =
         exists $ over namedSeries g
     _ -> error "array in ForAll not supported"
 evalProp (Not e) = forAll $ evalBool (Not e)
+evalProp (BoolVal x) = forAll x
 evalProp _ = error "this is not a predicate"
 
 evalBool :: Expression -> Bool
