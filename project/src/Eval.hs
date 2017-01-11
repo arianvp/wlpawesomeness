@@ -4,7 +4,7 @@ import Language
 import Substitute
 import Test.SmallCheck
 import Test.SmallCheck.Series
-import GHC.Stack
+
 
 evalProp :: Monad m => Expression -> Property m
 evalProp (BinOp Impl a b) = evalProp a ==> evalProp b
