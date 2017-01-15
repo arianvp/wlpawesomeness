@@ -19,8 +19,8 @@ paths' n (While e s:xs) =
     y <- paths' (n-1) s
     fmap ((Assume e : y) <>) (paths' (n - 1) (While e y : xs)) <>
       fmap (Assume (Not e) :) (paths' (n - 1) xs)
-paths' n (Var _ s:xs) = do
+paths' n (Var t s:xs) = do
   x <- paths' n s
   y <- paths' n xs
-  pure (x <> y)
+  pure (Var t x: y)
 paths' n (e:xs) = fmap (e :) (paths' n xs)

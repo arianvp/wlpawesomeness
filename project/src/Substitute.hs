@@ -30,4 +30,4 @@ substitute name replaceBy postc =
     ArrayAt n i ->
       if ArrayAt n i == name
           then replaceBy
-          else ArrayAt n i
+          else ArrayAt n (substitute name replaceBy i)

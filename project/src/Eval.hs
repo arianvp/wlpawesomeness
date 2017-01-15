@@ -15,37 +15,33 @@ evalProp (Forall (Variable name typ) a) =
       let
         namedSeries :: Monad m => Series m (Name, Int)
         namedSeries =  fmap (name,) series
-        f :: (Name, Int) -> Bool
-        f (_, x) = evalBool $ substitute (Name name) (IntVal x) a
+        f (_, x) = evalProp $ substitute (Name name) (IntVal x) a
       in
         over namedSeries f
     Prim Bool ->
       let
         namedSeries :: Monad m => Series m (Name, Bool)
         namedSeries =  fmap (name,) series
-        g :: (Name, Bool) -> Bool
-        g (_, x) = evalBool $ substitute (Name name) (BoolVal x) a
+        g (_, x) = evalProp $ substitute (Name name) (BoolVal x) a
       in
         over namedSeries g
     _ -> error "array in ForAll not supported"
 
--- not Forall should be treated specially 
+-- not Forall should be treated specially
 evalProp (Not (Forall (Variable name typ) a)) =
   case typ of
     Prim Int ->
       let
         namedSeries :: Monad m => Series m (Name, Int)
         namedSeries =  fmap (name,) series
-        f :: (Name, Int) -> Bool
-        f (_, x) = evalBool $ Not $ substitute (Name name) (IntVal x) a
+        f (_, x) = evalProp $ Not $ substitute (Name name) (IntVal x) a
       in
         exists $ over namedSeries f
     Prim Bool ->
       let
         namedSeries :: Monad m => Series m (Name, Bool)
         namedSeries =  fmap (name,) series
-        g :: (Name, Bool) -> Bool
-        g (_, x) = evalBool $ Not $ substitute (Name name) (BoolVal x) a
+        g (_, x) = evalProp $ Not $ substitute (Name name) (BoolVal x) a
       in
         exists $ over namedSeries g
     _ -> error "array in ForAll not supported"
@@ -53,12 +49,13 @@ evalProp (Not e) = forAll $ evalBool (Not e)
 evalProp (BoolVal x) = forAll x
 evalProp _ = error "this is not a predicate"
 
-evalBool :: Expression -> Bool
+
+evalBool :: HasCallStack => Expression -> Bool
 evalBool e =
   let (BoolVal b) = eval e
   in b
 
-eval :: Expression -> Expression
+eval :: HasCallStack => Expression -> Expression
 eval (Name _) = error "free variable"
 eval (IntVal x) =  IntVal x
 eval (BoolVal x) =  BoolVal x
@@ -97,11 +94,9 @@ eval (BinOp Eq a b) =
     (IntVal a', IntVal b') ->
       BoolVal (a' == b')
     _ -> error "type error"
--- TODO this is a harder one, we want to try
--- several values of a. quickcheck
-eval (Forall _ b) =
-  eval b
+eval (Forall _ _b) =
+  error "should never occur"
 eval (Not e) =
   let BoolVal e' = eval e
   in BoolVal (not e')
-eval (ArrayAt _ _) = error "todo array"
+eval (ArrayAt name e) = ArrayAt name (eval e)

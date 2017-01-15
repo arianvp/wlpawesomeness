@@ -36,5 +36,6 @@ normalize ((e1 :-: (IntVal x)) :-: (IntVal y)) = normalize e1 :-: IntVal (x+y)
 normalize (e1 :-: e2) = normalize e1 :-: normalize e2
 normalize ((e1 :+: (IntVal x)) :+: (IntVal y)) = normalize e1 :+: IntVal (x+y)
 normalize (e1 :+: e2) = normalize e1 :+: normalize e2
+normalize (Forall t e) = Forall t (normalize e)
 normalize e = e
 
