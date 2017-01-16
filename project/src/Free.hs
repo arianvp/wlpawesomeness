@@ -1,17 +1,20 @@
 module Free where
-{-import Language
-import Data.Set-}
+import Language
+import Data.Set
 
 --types :: [Statement] -> Map Name Type
 --types = undefined
 
-{-free :: Expression -> [Name]
+-- naive free variable calculator
+free :: Expression -> [Expression]
 free = toList . free'
-free' :: Expression -> Set Name
+free' :: Expression -> Set Expression
 free' (IntVal _) = empty
 free' (BoolVal _) = empty
-free' (Name x) = singleton x
+free' (Name x) = singleton (Name x)
 free' (BinOp _ y z) = free' y `union` free' z
 free' (Not x) = free' x
-free' (ArrayAt n i) = insert n (free' i)
-free' (Forall (Variable n _) i) = delete n (free' i)-}
+free' (ArrayAt n i) = singleton (ArrayAt n i)
+free' (Forall (Variable _ _) i) = free' i
+free' (Exists (Variable _ _) i) = free' i
+

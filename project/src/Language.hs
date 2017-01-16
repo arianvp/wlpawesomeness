@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Language
   ( Program(..)
@@ -38,13 +40,16 @@ import Data.Data (Data)
 import Data.Typeable (Typeable)
 import Data.Generics.Uniplate.Data ()
 import Text.PrettyPrint hiding (int)
+import GHC.Generics
+import Test.SmallCheck.Series
 
 data Program =
   Program [Parameter]
           [Parameter]
           [Statement]
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Generic)
 
+instance Monad m => Serial m Program
 
 prgrm :: Program -> Doc
 prgrm (Program ins outs s) =
@@ -75,7 +80,9 @@ data Statement
           [Statement]
   | Var [Variable]
         [Statement]
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Generic)
+
+instance Monad m => Serial m Statement
 
 instance Show Statement where
   show x = render (stmt x)
@@ -113,7 +120,10 @@ type Parameter = Variable
 data Variable =
   Variable Name
            Type
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m Variable where
+  series = cons2 (\(NonEmpty x) t -> Variable x t)
 
 instance Show Variable where
   show (Variable name typ) = name ++ ":" ++ show typ
@@ -127,7 +137,9 @@ data BinOp
   | Le
   | Leq
   | Eq
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m BinOp
 
 instance Show BinOp where
   show x =
@@ -151,10 +163,26 @@ data Expression
           Expression
   | Forall Variable
            Expression
+  | Exists Variable
+           Expression
   | Not Expression
   | ArrayAt Name
             Expression
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m Expression where
+  series =
+    cons1 IntVal \/
+    cons1 BoolVal \/
+    cons1 (\(NonEmpty x) -> Name x) \/
+    cons3 BinOp \/
+    cons2 Forall \/
+    cons2 Exists \/
+    cons1 Not \/
+    cons2 ArrayAt
+
+
+
 
 instance Show Expression where
   show x =
@@ -164,6 +192,8 @@ instance Show Expression where
       Name s -> s
       BinOp binOp e1 e2 -> "(" ++ show e1 ++ show binOp ++ show e2 ++ ")"
       Forall var e -> "∀" ++ show var ++ "." ++ show e
+      Exists var e -> "∃" ++ show var ++ "." ++ show e
+
       Not e -> "¬" ++ show e
       ArrayAt n e -> n ++ "[" ++ show e ++ "]"
 
@@ -217,7 +247,9 @@ pattern (:=:) e1 e2 = BinOp Eq e1 e2
 data Type
   = Prim PrimitiveType
   | ArrayT Array
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m Type
 
 instance Show Type where
   show (Prim primType) = show primType
@@ -226,11 +258,15 @@ instance Show Type where
 data PrimitiveType
   = Int
   | Bool
-  deriving (Show, Eq, Data, Typeable)
+  deriving (Show, Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m PrimitiveType
 
 data Array =
   Array PrimitiveType
-  deriving (Eq, Data, Typeable)
+  deriving (Eq, Data, Typeable, Ord, Generic)
+
+instance Monad m => Serial m Array
 
 instance Show Array where
   show (Array prim) = "[" ++ show prim ++ "]"

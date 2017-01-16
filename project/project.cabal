@@ -21,10 +21,10 @@ library
                      , Wlp
                      , Unshadow
                      , Logic
-                     , Property
                      , Substitute
                      , Eval
                      , Series
+                     , Free
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , mtl
@@ -57,6 +57,7 @@ test-suite project-test
                      , uniplate
                      , smallcheck
                      , tasty
+                     , mtl
   
   default-language:    Haskell2010
 

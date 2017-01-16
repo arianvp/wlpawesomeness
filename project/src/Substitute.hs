@@ -26,6 +26,7 @@ substitute name replaceBy postc =
     BinOp b x y ->
       BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
     Forall n b -> Forall n (substitute name replaceBy b)
+    Exists n b -> Exists n (substitute name replaceBy b)
     Not e -> Not (substitute name replaceBy e)
     ArrayAt n i ->
       if ArrayAt n i == name

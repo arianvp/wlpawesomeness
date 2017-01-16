@@ -52,6 +52,10 @@ unshadowExpr (Forall var e) = do
   var' <- unshadowVariable var
   e' <- unshadowExpr e
   pure (Forall var' e')
+unshadowExpr (Exists var e) = do
+  var' <- unshadowVariable var
+  e' <- unshadowExpr e
+  pure (Exists var' e')
 unshadowExpr (Not e) = do
   e' <- unshadowExpr e
   pure (Not e')

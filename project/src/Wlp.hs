@@ -12,8 +12,10 @@ wlp (stmt:stmts) postc =
     Assert e -> e &&. wlp stmts postc
     Assume e -> e ==>. wlp stmts postc
     -- we _KNOW_ n if fresh due to preprocessing ,so
-    -- this is safe
-    Var n s ->  foldr Forall (wlp s postc) n
+    -- TODO fix this:
+    Var n s ->
+    -- is this correct?
+      foldr Forall (wlp s (wlp stmts postc)) n
       -- foldr Forall (calcWlp s (calcWlp stmts postc)) n
     -- TODO: arrays
     (n := e) -> substitute (Name n) e (wlp stmts postc)

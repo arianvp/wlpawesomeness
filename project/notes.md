@@ -64,3 +64,5 @@ smallChecking we know the value of "x" and "y".
 a[x+1] -> a_x  and a[y+1] -> a_y   . Now we can check with what we already have!
 
 
+
+### We should rewrite Var Order in a very specific way

@@ -12,8 +12,13 @@ import Verify
 import qualified Programs
 import qualified UnitTests
 
+import System.Environment
+import Control.Monad.IO.Class
+
 main :: IO ()
-main =
-  hspec $ do
+main =  hspec $ do
+  context "unit" $ do
     UnitTests.spec
+  context "programs " $ do
     Programs.spec
+
