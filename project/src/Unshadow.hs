@@ -48,14 +48,14 @@ unshadowExpr (Name n) = do
   case Map.lookup n names of
     Nothing -> pure (Name n)
     Just n' -> pure (Name n')
-unshadowExpr (Forall var e) = do
+unshadowExpr (Quantified (ForAll var) e) = do
   var' <- unshadowVariable var
   e' <- unshadowExpr e
-  pure (Forall var' e')
-unshadowExpr (Exists var e) = do
+  pure (forAll var' e')
+unshadowExpr (Quantified (Exists var) e) = do
   var' <- unshadowVariable var
   e' <- unshadowExpr e
-  pure (Exists var' e')
+  pure (exists var' e')
 unshadowExpr (Not e) = do
   e' <- unshadowExpr e
   pure (Not e')

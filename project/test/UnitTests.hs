@@ -19,8 +19,8 @@ import qualified Logic
 import qualified Series
 import qualified Eval
 
-noQuantifier (Forall _ _) = False
-noQuantifier (Exists _ _) = False
+noQuantifier (Quantified _ _) = False
+noQuantifier (Quantified _ _) = False
 noQuantifier _ = True
 
 spec :: Spec
@@ -34,13 +34,13 @@ spec = do
     it "the wikipedia example works" $ do
       let
         before =
-          (a :||: (Exists x b)) :==>: (Forall z c)
+          (a :||: (exists x b)) :==>: (forAll z c)
       (all noQuantifier . universe . Logic.strip . Logic.prenex $ before) `shouldBe` True
 
     it "Another example works" $ do
       let
         before =
-          BoolVal True :==>: (Forall (Variable "i" (Prim Int)) (Name "i" :=: Name "i") :&&: BoolVal True)
+          BoolVal True :==>: (forAll (Variable "i" (Prim Int)) (Name "i" :=: Name "i") :&&: BoolVal True)
       Logic.prenex before `shouldSatisfy` all noQuantifier . universe . Logic.strip
 
   describe "Unshadow.unshadow" $
@@ -50,12 +50,12 @@ spec = do
          do let pbefore =
                   [ Var
                       [Variable "i" (Prim Int)]
-                      [Assert (Forall (Variable "i" (Prim Bool)) (Name "i"))]
+                      [Assert (forAll (Variable "i" (Prim Bool)) (Name "i"))]
                   ]
                 pafter =
                   [ Var
                       [Variable "i" (Prim Int)]
-                      [Assert (Forall (Variable "i'" (Prim Bool)) (Name "i'"))]
+                      [Assert (forAll (Variable "i'" (Prim Bool)) (Name "i'"))]
                   ]
             Unshadow.unshadow pbefore `shouldBe` pafter
        it "an example of unshadowing" $
@@ -153,7 +153,7 @@ spec = do
     it "only tries relevant test cases" $ do
       let
         prop =
-          Forall (Variable "i" (Prim Int)) $
+          forAll (Variable "i" (Prim Int)) $
             (IntVal 0 :<=: Name "i") :==>: ((IntVal 0 :<: Name "i") :||: (Name "i" :=: IntVal 0))
       property $ Eval.evalProp prop
     it "evalArrays should get rid of non-evaluated expressions" $ do
@@ -167,61 +167,61 @@ spec = do
     it "should be able to quickcheck a simple array" $ do
       let
         wlp =
-          Forall (Variable "a" (ArrayT (Array Int))) $
-          Forall (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
             ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")
       property $ Eval.evalProp wlp
     it "should be able to quickcheck a simple array'" $ do
       let
         wlp =
-          Forall (Variable "i" (Prim Int)) $
-          Forall (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
             ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")
       property $ Eval.evalProp wlp
     it "the form of the expr doesnt matter as long as it evaluates [1]" $ do
       let
         wlp =
-          Forall (Variable "i" (Prim Int)) $
-          Forall (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
             (ArrayAt "a" (IntVal 1 :+: Name "i") :=: ArrayAt "a" (Name "i" :+: IntVal 1))
       property $ Eval.evalProp wlp
     it "the order of forall does matter [1] " $ do
       let
         wlp =
-          Forall (Variable "a" (ArrayT (Array Int))) $
-          Forall (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
             (ArrayAt "a" (IntVal 1 :+: Name "i") :=: ArrayAt "a" (Name "i" :+: IntVal 1))
       property $ Eval.evalProp wlp
     it "the form of the expr doesnt matter as long as it evaluates [2]" $ do
       let
         wlp =
-          Forall (Variable "i" (Prim Int)) $
-          Forall (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
             (ArrayAt "a" (Name "i" :+: IntVal 1) :=: ArrayAt "a" (IntVal 1 :+: Name "i"))
       property $ Eval.evalProp wlp
     it "the order of forall does matter! [2] " $ do
       let
         wlp =
-          Forall (Variable "a" (ArrayT (Array Int))) $
-          Forall (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
             (ArrayAt "a" (Name "i" :+: IntVal 1) :=: ArrayAt "a" (IntVal 1 :+: Name "i"))
       property $ Eval.evalProp wlp
 
     it "should be able to quickcheck multiple simple array'" $ do
       let
         wlp =
-          Forall (Variable "i" (Prim Int)) $
-          Forall (Variable "a" (ArrayT (Array Int))) $
-          Forall (Variable "b" (ArrayT (Array Int))) $
+          forAll (Variable "i" (Prim Int)) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "b" (ArrayT (Array Int))) $
             (ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")) :&&:
             (ArrayAt "b" (Name "j") :=: ArrayAt "b" (Name "j"))
       property $ Eval.evalProp wlp
     it "foralls should not cause any issues" $ do
       let
         wlp =
-          Forall (Variable "a" (ArrayT (Array Int))) $
+          forAll (Variable "a" (ArrayT (Array Int))) $
             (ArrayAt "a" (IntVal 0) :=: IntVal 0) :&&:
-              (Forall (Variable "i" (Prim Int))
+              (forAll (Variable "i" (Prim Int))
                 ((Name "i" :=: IntVal 0) :==>: (ArrayAt "a" (Name "i") :=: IntVal 0)))
       property $ Eval.evalProp wlp
 

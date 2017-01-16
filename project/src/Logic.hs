@@ -5,10 +5,15 @@ import Language
 
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
-strip (Forall _ e) = strip e
-strip (Exists _ e) = strip e
+strip (Quantified (ForAll _) e) = strip e
+strip (Quantified (Exists _) e) = strip e
 strip e = e
 
+strip' :: Expression -> (Expression, [Quantifier])
+strip' (Quantified q e) =
+  let (e', quants) = strip' e
+  in (e', q:quants)
+strip' e = (e, [])
 
 normalize :: Expression -> Expression
 -- the main rewrite rule to remove false postives
@@ -37,7 +42,7 @@ normalize ((e1 :-: (IntVal x)) :-: (IntVal y)) = normalize e1 :-: IntVal (x+y)
 normalize (e1 :-: e2) = normalize e1 :-: normalize e2
 normalize ((e1 :+: (IntVal x)) :+: (IntVal y)) = normalize e1 :+: IntVal (x+y)
 normalize (e1 :+: e2) = normalize e1 :+: normalize e2
-normalize (Forall t e) = Forall t (normalize e)
+normalize (Quantified (ForAll t) e) = forAll t (normalize e)
 normalize e = e
 
 -- move all the quantors to the front
@@ -47,22 +52,22 @@ prenex e =
     then e
     else prenex (prenex' e)
 prenex' :: Expression -> Expression
-prenex' (Forall x e) = Forall x (prenex' e)
-prenex' (Exists x e) = Exists x (prenex' e)
-prenex' (Not (Exists x a)) = Forall x (Not a)
-prenex' (Not (Forall x a)) = Exists x (Not a)
-prenex' (a :==>: Exists x b) = Exists x (a :==>: b)
-prenex' (a :==>: Forall x b) = Forall x (a :==>: b)
-prenex' (Forall x a :==>: b) = Exists x (a :==>: b)
-prenex' (Exists x a :==>: b) = Forall x (a :==>: b)
-prenex' (Exists x a :||: b) = Exists x (a :||: b)
-prenex' (a :||: Exists x b) = Exists x (a :||: b)
-prenex' (Exists x a :&&: b) = Exists x (a :&&: b)
-prenex' (a :&&: Exists x b) = Exists x (a :&&: b)
-prenex' (Forall x a :||: b) = Forall x (a :||: b)
-prenex' (a :||: Forall x b) = Forall x (a :||: b)
-prenex' (Forall x a :&&: b) = Forall x (a :&&: b)
-prenex' (a :&&: Forall x b) = Forall x (a :&&: b)
+prenex' (Quantified (ForAll x) e) = forAll x (prenex' e)
+prenex' (Quantified (Exists x) e) = exists x (prenex' e)
+prenex' (Not (Quantified (Exists x) a)) = forAll x (Not a)
+prenex' (Not (Quantified (ForAll x) a)) = exists x (Not a)
+prenex' (a :==>: Quantified (Exists x) b) = exists x (a :==>: b)
+prenex' (a :==>: Quantified (ForAll x) b) = forAll x (a :==>: b)
+prenex' (Quantified (ForAll x) a :==>: b) = exists x (a :==>: b)
+prenex' (Quantified (Exists x) a :==>: b) = forAll x (a :==>: b)
+prenex' (Quantified (Exists x) a :||: b) = exists x (a :||: b)
+prenex' (a :||: Quantified (Exists x) b) = exists x (a :||: b)
+prenex' (Quantified (Exists x) a :&&: b) = exists x (a :&&: b)
+prenex' (a :&&: Quantified (Exists x) b) = exists x (a :&&: b)
+prenex' (Quantified (ForAll x) a :||: b) = forAll x (a :||: b)
+prenex' (a :||: Quantified (ForAll x) b) = forAll x (a :||: b)
+prenex' (Quantified (ForAll x) a :&&: b) = forAll x (a :&&: b)
+prenex' (a :&&: Quantified (ForAll x) b) = forAll x (a :&&: b)
 prenex' (a :==>: b) = prenex' a :==>: prenex' b
 prenex' (a :&&: b) = prenex' a :&&: prenex' b
 prenex' (a :||: b) = prenex' a :||: prenex' b

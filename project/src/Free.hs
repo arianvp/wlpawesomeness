@@ -15,6 +15,6 @@ free' (Name x) = singleton (Name x)
 free' (BinOp _ y z) = free' y `union` free' z
 free' (Not x) = free' x
 free' (ArrayAt n i) = singleton (ArrayAt n i)
-free' (Forall (Variable _ _) i) = free' i
-free' (Exists (Variable _ _) i) = free' i
+free' (Quantified (ForAll (Variable _ _)) i) = free' i
+free' (Quantified (Exists (Variable _ _)) i) = free' i
 

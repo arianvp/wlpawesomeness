@@ -15,7 +15,7 @@ wlp (stmt:stmts) postc =
     -- TODO fix this:
     Var n s ->
     -- is this correct?
-      foldr Forall (wlp s (wlp stmts postc)) n
+      foldr forAll (wlp s (wlp stmts postc)) n
       -- foldr Forall (calcWlp s (calcWlp stmts postc)) n
     -- TODO: arrays
     (n := e) -> substitute (Name n) e (wlp stmts postc)

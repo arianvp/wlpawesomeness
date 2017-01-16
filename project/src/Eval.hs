@@ -3,7 +3,8 @@ module Eval where
 import Language
 import Substitute
 import Free
-import Test.SmallCheck
+import Test.SmallCheck hiding (forAll, exists)
+import qualified Test.SmallCheck as Property
 import Test.SmallCheck.Series
 
 prop :: Monad m => [(Expression, Series m Expression)] -> (Expression -> Property m)
@@ -38,8 +39,8 @@ evalArrays name (Not e) =
 evalArrays _ (IntVal a) = IntVal a
 evalArrays _ (BoolVal a) = BoolVal a
 evalArrays _ (Name a) = Name a
-evalArrays name (Forall y e) = Forall y (evalArrays name e)
-evalArrays _ (Exists _ _) = error "dunno"
+evalArrays name (Quantified (ForAll y) e) = forAll y (evalArrays name e)
+evalArrays _ (Quantified (Exists _) _) = error "dunno"
 
 
 
@@ -49,8 +50,8 @@ evalArrays _ (Exists _ _) = error "dunno"
 -- an array index operation before we witness the array itself.
 evalProp :: Monad m => Expression -> Property m
 evalProp (BinOp Impl a b) = evalProp a ==> evalProp b
-evalProp (BinOp x a b) = forAll $ evalBool (BinOp x a b)
-evalProp (Forall (Variable name typ) a) =
+evalProp (BinOp x a b) = Property.forAll $ evalBool (BinOp x a b)
+evalProp (Quantified (ForAll (Variable name typ)) a) =
   case typ of
     -- every time we encounter a variable, we should evaluate
     -- call sites as far as possible
@@ -83,7 +84,7 @@ evalProp (Forall (Variable name typ) a) =
         -- _evalArrays should eval the call sites, and requantify them
 
 -- not Forall should be treated specially
-evalProp (Not (Forall (Variable name typ) a)) =
+{-evalProp (Not (Forall (Variable name typ) a)) =
   case typ of
     Prim Int ->
       let
@@ -91,7 +92,7 @@ evalProp (Not (Forall (Variable name typ) a)) =
         namedSeries =  fmap (name,) series
         f (_, x) = evalProp $ Not $ substitute (Name name) (IntVal x) a
       in
-        exists $ over namedSeries f
+        Property.exists $ over namedSeries f
     Prim Bool ->
       let
         namedSeries :: Monad m => Series m (Name, Bool)
@@ -99,9 +100,10 @@ evalProp (Not (Forall (Variable name typ) a)) =
         g :: (Name, Bool) -> Bool
         g (_, x) = evalBool $ Not $ substitute (Name name) (BoolVal x) a
       in
-        exists $ over namedSeries g
+        Property.exists $ over namedSeries g
     _ -> error "array in ForAll not supported"
-evalProp (BoolVal x) = forAll x
+-}
+evalProp (BoolVal x) = Property.forAll x
 evalProp e = evalProp (eval' e)
 --evalProp e = error $ "this is not a predicate : " ++ show e
 
@@ -167,8 +169,8 @@ eval' (BinOp Eq a b) =
       BoolVal (a' == b')
     (a', b') ->
       BinOp Eq a' b'
-eval' (Forall names e) = Forall names (eval' e)
-eval' (Exists names e) = Exists names (eval' e)
+eval' (Quantified (ForAll names) e) = forAll names (eval' e)
+eval' (Quantified (Exists names) e) = exists names (eval' e)
 eval' (Not e) =
   case eval' e of
     BoolVal e' -> BoolVal (not e')

@@ -58,7 +58,7 @@ minind =
               , "i" := (Name "i" :+: IntVal 1)
               ]
           ]
-      , Assert (Forall (Variable "i" (Prim Int)) (iinN :==>: (ArrayAt "a" (Name "r") :<=: ArrayAt "a" (Name "i"))))
+      , Assert (forAll (Variable "i" (Prim Int)) (iinN :==>: (ArrayAt "a" (Name "r") :<=: ArrayAt "a" (Name "i"))))
       ]
   ]
 
@@ -68,7 +68,7 @@ spec = do
   verifyProgram 5 "a test if forall works" 
     [ Var [Variable "x" (Prim Int)]
       [ Assume (Name "x" :=: IntVal 0)
-      , Assert (Forall (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
+      , Assert (forAll (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
       ]
     ]
   -- TODO write a function freeVars, that automatically gives the series

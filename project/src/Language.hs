@@ -14,6 +14,9 @@ module Language
   , Array(..)
   , Type(..)
   , BinOp(..)
+  , Quantifier(..)
+  , forAll
+  , exists
   , (+.)
   , pattern (:+:)
   , (-.)
@@ -154,6 +157,20 @@ instance Show BinOp where
       Eq -> "="
   -- todo fixitivity
 
+data Quantifier
+  = Exists Variable
+  | ForAll Variable
+  deriving (Eq, Ord, Data, Typeable, Generic)
+
+instance Monad m => Serial m Quantifier
+
+
+forAll :: Variable -> Expression -> Expression
+forAll v e = Quantified (ForAll v) e
+
+exists :: Variable -> Expression -> Expression
+exists v e = Quantified (Exists v) e
+
 data Expression
   = IntVal Int
   | BoolVal Bool
@@ -161,25 +178,13 @@ data Expression
   | BinOp BinOp
           Expression
           Expression
-  | Forall Variable
-           Expression
-  | Exists Variable
-           Expression
+  | Quantified Quantifier Expression
   | Not Expression
   | ArrayAt Name
             Expression
   deriving (Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m Expression where
-  series =
-    cons1 IntVal \/
-    cons1 BoolVal \/
-    cons1 (\(NonEmpty x) -> Name x) \/
-    cons3 BinOp \/
-    cons2 Forall \/
-    cons2 Exists \/
-    cons1 Not \/
-    cons2 ArrayAt
+instance Monad m => Serial m Expression
 
 
 
@@ -191,8 +196,8 @@ instance Show Expression where
       BoolVal b -> show b
       Name s -> s
       BinOp binOp e1 e2 -> "(" ++ show e1 ++ show binOp ++ show e2 ++ ")"
-      Forall var e -> "∀" ++ show var ++ "." ++ show e
-      Exists var e -> "∃" ++ show var ++ "." ++ show e
+      Quantified (ForAll var) e -> "∀" ++ show var ++ "." ++ show e
+      Quantified (Exists var) e -> "∃" ++ show var ++ "." ++ show e
 
       Not e -> "¬" ++ show e
       ArrayAt n e -> n ++ "[" ++ show e ++ "]"
