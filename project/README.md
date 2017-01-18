@@ -1,6 +1,21 @@
 # WLPAWESOMENESS
 WLPAWESOMENESS is a program testing tool.
 
-## How to test a program
+# Compiling
 
-1. Open `test/Spec.hs`
+```
+stack build
+```
+
+# Run unit tests
+
+```
+stack test
+```
+
+# Run the program
+
+```
+stack exec project-exe
+```
+

@@ -23,8 +23,9 @@ library
                      , Logic
                      , Substitute
                      , Eval
-                     , Series
                      , Free
+                     , Verify
+                     , Programs
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , mtl
@@ -48,7 +49,7 @@ test-suite project-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  other-modules:       Verify, Programs, UnitTests
+  other-modules:       UnitTests
   build-depends:       base
                      , project
                      , hspec

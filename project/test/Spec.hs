@@ -19,6 +19,4 @@ main :: IO ()
 main =  hspec $ do
   context "unit" $ do
     UnitTests.spec
-  context "programs " $ do
-    Programs.spec
 

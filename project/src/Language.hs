@@ -113,7 +113,7 @@ stmt (a := b) = text a <> text " := " <> text (show b)
 stmt (Var vars s) =
   text "var(" <> (hcat $ punctuate (text ",") (map (text . show) vars)) <>
   text "){" $$
-  nest 2 (stmts s) $$ 
+  nest 2 (stmts s) $$
   text "}"
 
 type Name = String
@@ -123,7 +123,10 @@ type Parameter = Variable
 data Variable =
   Variable Name
            Type
-  deriving (Eq, Data, Typeable, Ord, Generic)
+  deriving (Eq, Data, Typeable, Generic)
+
+instance Ord Variable where
+  compare (Variable _ t) (Variable _ t') = compare t t'
 
 instance Monad m => Serial m Variable where
   series = cons2 (\(NonEmpty x) t -> Variable x t)
@@ -161,6 +164,12 @@ data Quantifier
   = Exists Variable
   | ForAll Variable
   deriving (Eq, Ord, Data, Typeable, Generic)
+
+instance Show Quantifier where
+  show q =
+    case q of
+      (ForAll var) -> "∀" ++ show var
+      (Exists var) -> "∃" ++ show var
 
 instance Monad m => Serial m Quantifier
 

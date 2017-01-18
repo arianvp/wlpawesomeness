@@ -2,6 +2,7 @@
 {-#LANGUAGE PatternSynonyms #-}
 module Logic where
 import Language
+import Data.List (sort)
 
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
@@ -45,6 +46,10 @@ normalize (e1 :+: e2) = normalize e1 :+: normalize e2
 normalize (Quantified (ForAll t) e) = forAll t (normalize e)
 normalize e = e
 
+sortedPrenex :: Expression -> Expression
+sortedPrenex e = 
+  let (e', quants) = strip' . prenex $  e
+  in foldr Quantified e' (sort  quants)
 -- move all the quantors to the front
 prenex :: Expression -> Expression
 prenex e =
