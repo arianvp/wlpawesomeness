@@ -28,6 +28,11 @@ substitute name replaceBy postc =
     Quantified (ForAll n) b -> forAll n (substitute name replaceBy b)
     Quantified (Exists n) b -> exists n (substitute name replaceBy b)
     Not e -> Not (substitute name replaceBy e)
+    IfThenElseE pred' a b ->
+      IfThenElseE
+        (substitute name replaceBy pred')
+        (substitute name replaceBy a)
+        (substitute name replaceBy b)
     ArrayAt n i ->
       if ArrayAt n i == name
           then replaceBy

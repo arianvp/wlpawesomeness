@@ -69,6 +69,7 @@ evalProp' (BoolVal x) = Property.forAll x
 evalProp' (IntVal x) = error $ show x ++ " is not a boolean"
 evalProp' (Name x) = error $ show x ++ " is still free"
 evalProp' (ArrayAt x _) = error $ show x ++ " is still free"
+evalProp' (IfThenElseE pred' a b) = evalProp' (reduce (IfThenElseE pred' a b))
 
 
 -- | Reduces an expression as far as possible
@@ -130,8 +131,14 @@ reduce (Quantified (ForAll names) e) = forAll names (reduce e)
 reduce (Quantified (Exists names) e) = exists names (reduce e)
 reduce (Not e) =
   case reduce e of
-    BoolVal e' -> BoolVal (not e')
+    BoolVal b -> BoolVal (not b)
     e' -> Not e'
+reduce (IfThenElseE pred' a b) =
+  case reduce pred' of
+    BoolVal bl ->
+      if bl then reduce a else reduce b
+    e' -> IfThenElseE e' (reduce a) (reduce b)
+
 
 
 

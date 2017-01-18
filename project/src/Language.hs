@@ -191,6 +191,7 @@ data Expression
   | Not Expression
   | ArrayAt Name
             Expression
+  | IfThenElseE Expression Expression Expression
   deriving (Eq, Data, Typeable, Ord, Generic)
 
 instance Monad m => Serial m Expression
@@ -210,6 +211,7 @@ instance Show Expression where
 
       Not e -> "¬" ++ show e
       ArrayAt n e -> n ++ "[" ++ show e ++ "]"
+      IfThenElseE pred' left right -> show pred' ++ "->" ++ show left ++ "|" ++ show right
 
 -- dsl to make expr building easier
 int :: Int -> Expression

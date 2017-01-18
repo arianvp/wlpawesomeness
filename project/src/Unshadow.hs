@@ -65,6 +65,11 @@ unshadowExpr (ArrayAt n e) = do
   case Map.lookup n names of
     Nothing -> pure (ArrayAt n e')
     Just n' -> pure (ArrayAt n' e')
+unshadowExpr (IfThenElseE pred' a b) = do
+  pred'' <- unshadowExpr pred'
+  a' <- unshadowExpr a
+  b' <- unshadowExpr b
+  pure (IfThenElseE pred'' a' b')
 
 
 unshadow :: [Statement] -> [Statement]

@@ -19,7 +19,6 @@ import qualified Logic
 import qualified Eval
 
 noQuantifier (Quantified _ _) = False
-noQuantifier (Quantified _ _) = False
 noQuantifier _ = True
 
 spec :: Spec
@@ -135,11 +134,13 @@ spec = do
                       If {} -> False
                       While {} -> False
                       _ -> True)
-  describe "Wlp.wlp" $
-    do it "sequential composition is correct for arrays" $
-         do let before = ["r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
-                after = ArrayAt "a" (Name "i") :&&: BoolVal True
-            Wlp.wlp before (BoolVal True) `shouldBe` after
+  describe "Wlp.wlp" $ do
+    it "sequential composition is correct for arrays" $ do
+      let before = ["r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
+      let after = ArrayAt "a" (Name "i") :&&: BoolVal True
+      Wlp.wlp before (BoolVal True) `shouldBe` after
+    it "can handle array assignment" $ do
+      False `shouldBe` True
   describe "Eval" $ do
     it "only tries relevant test cases" $ do
       let
@@ -207,4 +208,10 @@ spec = do
               (forAll (Variable "i" (Prim Int))
                 ((Name "i" :=: IntVal 0) :==>: (ArrayAt "a" (Name "i") :=: IntVal 0)))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
+    it "ifthenelse works as expected [1]" $ do
+      let x = IfThenElseE (BoolVal True) (Name "x") (Name "y")
+      Eval.reduce x `shouldBe` Name "x"
+    it "ifthenelse works as expected [2]" $ do
+      let x = IfThenElseE (BoolVal False) (Name "x") (Name "y")
+      Eval.reduce x `shouldBe` Name "y"
 
