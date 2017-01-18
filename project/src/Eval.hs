@@ -121,6 +121,8 @@ reduce (BinOp Leq a b) =
       BinOp Leq a' b'
 reduce (BinOp Eq a b) =
   case (reduce a, reduce b) of
+    (Name a', Name b') ->
+      BoolVal (a' == b')
     (IntVal a', IntVal b') ->
       BoolVal (a' == b')
     (BoolVal a', BoolVal b') ->

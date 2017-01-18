@@ -93,29 +93,20 @@ minindWrong =
       ]
   ]
 
--- the programs to verify
-{-spec :: Spec
-spec = do
-  verifyProgram 5 "a test if forall works" 
-    [ Var [Variable "x" (Prim Int)]
-      [ Assume (Name "x" :=: IntVal 0)
-      , Assert (forAll (Variable "y" (Prim Int)) ((IntVal 0 :<: Name "y" ) :==>: ((Name "y" :=: Name "x"))))
+swap :: [Statement]
+swap =
+  [ Var
+      [ Variable "a" (ArrayT (Array Int))
+      , Variable "i" (Prim Int)
+      , Variable "j" (Prim Int)
+      , Variable "a'" (ArrayT (Array Int))
       ]
-    ]
-  -- TODO write a function freeVars, that automatically gives the series
-  -- of a wlp
-  verifyProgram 5 "exampleE" exampleE
-  {-verifyProgram
-    5
-    "minind"
-    [ (Name "x", Series.ints)
-    , (ArrayAt "a" (Name "i") , Series.ints)
-    , (ArrayAt "a" (Name "r") , Series.ints)
-    , (Name "i", Series.ints)
-    , (Name "N", Series.ints)
-    , (Name "r", Series.ints)
-    ]
-    minind
-  -}
-  verifyProgram 15 "minind" minind
--}
+      [ Var
+          [ Variable "tmp" (Prim Int) ]
+          [ N "tmp" := ArrayAt "a" (Name "i")
+          , A "a" (Name "i") := ArrayAt "a" (Name "j")
+          , A "a" (Name "j") := Name "tmp"
+          , N "a'" := Name "a"
+          ]
+      ]
+  ]

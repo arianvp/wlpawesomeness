@@ -134,13 +134,18 @@ spec = do
                       If {} -> False
                       While {} -> False
                       _ -> True)
+       
   describe "Wlp.wlp" $ do
     it "sequential composition is correct for arrays" $ do
       let before = [N "r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
       let after = ArrayAt "a" (Name "i") :&&: BoolVal True
       Wlp.wlp before (BoolVal True) `shouldBe` after
-    it "can handle array assignment" $ do
-      False `shouldBe` True
+    it "the array assignment example from lecture notes works" $ do
+      let prog = [A "a" (Name "i") := IntVal 0]
+      let postc =  ArrayAt "a" (Name "i") :=: ArrayAt "a" (IntVal 3)
+      let wlp = IntVal 0 :=: (IfThenElseE  (IntVal 3 :=: Name "i") (IntVal 0) (ArrayAt "a" (IntVal 3)))
+      Eval.reduce (Wlp.wlp prog postc) `shouldBe` wlp
+
   describe "Eval" $ do
     it "only tries relevant test cases" $ do
       let

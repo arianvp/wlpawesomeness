@@ -21,9 +21,22 @@ substituteArray (A name index) replaceBy postc =
     ArrayAt n i ->
       if name == n
         then IfThenElseE (i :=: index) replaceBy (ArrayAt n i)
-        else ArrayAt n i
-
-    _ -> error "no"
+        else ArrayAt n (substituteArray (A name index) replaceBy i)
+    IntVal x ->  IntVal x
+    BoolVal x -> BoolVal x
+    Name n -> Name n
+    BinOp x a b ->
+      BinOp x
+        (substituteArray (A name index) replaceBy a)
+        (substituteArray (A name index) replaceBy b)
+    Not e -> Not (substituteArray (A name index) replaceBy e)
+    Quantified (ForAll n) e -> forAll n (substituteArray (A name index) replaceBy e)
+    Quantified (Exists n) e -> exists n (substituteArray (A name index) replaceBy e)
+    IfThenElseE a b c ->
+      IfThenElseE
+        (substituteArray (A name index) replaceBy a)
+        (substituteArray (A name index) replaceBy b)
+        (substituteArray (A name index) replaceBy c)
 
 substitute ::  Expression -> Expression -> Expression -> Expression
 substitute name replaceBy postc =

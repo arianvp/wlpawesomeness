@@ -13,7 +13,9 @@ wlp (stmt:stmts) postc =
     Assume e -> e ==>. wlp stmts postc
     Var n s ->
       foldr forAll (wlp s (wlp stmts postc)) n
-    (N n := e) -> substitute (Name n) e (wlp stmts postc)
+    (N n := e) ->
+      -- TODO substitute an array by another array!!
+      substitute (Name n) e (wlp stmts postc)
     (A n i := e2) -> substituteArray (A n i) e2 (wlp stmts postc)
     While _ _ -> error "wlp only supports cannonical statements, no branching"
     If _ _ _ -> error "wlp only supports cannonical statements, no branching"
