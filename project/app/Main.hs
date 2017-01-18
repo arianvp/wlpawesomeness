@@ -8,5 +8,5 @@ main = do
   putStrLn ""
   verify 2 4 Programs.minindWrong
   putStrLn ""
-  verify 2 4 Programs.minind
+  verify 2 5 Programs.minind
   putStrLn ""

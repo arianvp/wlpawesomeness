@@ -4,6 +4,9 @@ module Logic where
 import Language
 import Data.List (sort)
 
+normalize :: Expression -> Expression
+normalize = normalize' . sortedPrenex
+
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
 strip (Quantified (ForAll _) e) = strip e
@@ -16,38 +19,39 @@ strip' (Quantified q e) =
   in (e', q:quants)
 strip' e = (e, [])
 
-normalize :: Expression -> Expression
+
+normalize' :: Expression -> Expression
 -- the main rewrite rule to remove false postives
-normalize (e1 :==>: (e2 :==>: e3)) =  normalize ((normalize (e1 :&&: e2)) :==>: normalize e3)
+normalize' (e1 :==>: (e2 :==>: e3)) =  normalize' ((normalize' (e1 :&&: e2)) :==>: normalize' e3)
 -- flatten booleans
-normalize (BoolVal True :==>: e) = normalize e
-normalize (BoolVal False :==>: _e) = BoolVal True
-normalize (e1 :==>: e2) = normalize e1 :==>: normalize e2
-normalize (e1 :&&: BoolVal True) = normalize e1
-normalize (BoolVal True :&&: e1) = normalize e1
-normalize (_e1 :&&: BoolVal False) = BoolVal False
-normalize (e1 :&&: e2) = normalize e1 :&&: normalize e2
-normalize (BoolVal False :&&: _e1) = BoolVal False
-normalize (BoolVal False :||: e1) = normalize e1
-normalize (e1 :||: BoolVal False) = normalize e1
-normalize (BoolVal True :||: _e1) = BoolVal True
-normalize (_e1 :||: BoolVal True) = BoolVal True
+normalize' (BoolVal True :==>: e) = normalize' e
+normalize' (BoolVal False :==>: _e) = BoolVal True
+normalize' (e1 :==>: e2) = normalize' e1 :==>: normalize' e2
+normalize' (e1 :&&: BoolVal True) = normalize' e1
+normalize' (BoolVal True :&&: e1) = normalize' e1
+normalize' (_e1 :&&: BoolVal False) = BoolVal False
+normalize' (e1 :&&: e2) = normalize' e1 :&&: normalize' e2
+normalize' (BoolVal False :&&: _e1) = BoolVal False
+normalize' (BoolVal False :||: e1) = normalize' e1
+normalize' (e1 :||: BoolVal False) = normalize' e1
+normalize' (BoolVal True :||: _e1) = BoolVal True
+normalize' (_e1 :||: BoolVal True) = BoolVal True
 
 
-normalize (a :=: b) = normalize a :=: normalize b
-normalize (a :<: b) = normalize a :<: normalize b
-normalize (a :<=: b) = normalize a :<=: normalize b
-normalize (Not a) = Not (normalize a)
+normalize' (a :=: b) = normalize' a :=: normalize' b
+normalize' (a :<: b) = normalize' a :<: normalize' b
+normalize' (a :<=: b) = normalize' a :<=: normalize' b
+normalize' (Not a) = Not (normalize' a)
 -- right to left flattening of integer araithmatic
-normalize ((e1 :-: (IntVal x)) :-: (IntVal y)) = normalize e1 :-: IntVal (x+y)
-normalize (e1 :-: e2) = normalize e1 :-: normalize e2
-normalize ((e1 :+: (IntVal x)) :+: (IntVal y)) = normalize e1 :+: IntVal (x+y)
-normalize (e1 :+: e2) = normalize e1 :+: normalize e2
-normalize (Quantified (ForAll t) e) = forAll t (normalize e)
-normalize e = e
+normalize' ((e1 :-: (IntVal x)) :-: (IntVal y)) = normalize' e1 :-: IntVal (x+y)
+normalize' (e1 :-: e2) = normalize' e1 :-: normalize' e2
+normalize' ((e1 :+: (IntVal x)) :+: (IntVal y)) = normalize' e1 :+: IntVal (x+y)
+normalize' (e1 :+: e2) = normalize' e1 :+: normalize' e2
+normalize' (Quantified (ForAll t) e) = forAll t (normalize' e)
+normalize' e = e
 
 sortedPrenex :: Expression -> Expression
-sortedPrenex e = 
+sortedPrenex e =
   let (e', quants) = strip' . prenex $  e
   in foldr Quantified e' (sort  quants)
 -- move all the quantors to the front
