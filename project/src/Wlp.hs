@@ -11,13 +11,9 @@ wlp (stmt:stmts) postc =
     Skip -> wlp stmts postc
     Assert e -> e &&. wlp stmts postc
     Assume e -> e ==>. wlp stmts postc
-    -- we _KNOW_ n if fresh due to preprocessing ,so
-    -- TODO fix this:
     Var n s ->
-    -- is this correct?
       foldr forAll (wlp s (wlp stmts postc)) n
-      -- foldr Forall (calcWlp s (calcWlp stmts postc)) n
-    -- TODO: arrays
-    (n := e) -> substitute (Name n) e (wlp stmts postc)
+    (N n := e) -> substitute (Name n) e (wlp stmts postc)
+    (A n i := e2) -> substituteArray (A n i) e2 (wlp stmts postc)
     While _ _ -> error "wlp only supports cannonical statements, no branching"
     If _ _ _ -> error "wlp only supports cannonical statements, no branching"

@@ -4,7 +4,6 @@ module Substitute where
 import Language
 import qualified Data.Set as Set
 import Data.Set (Set)
-import GHC.Stack
 
 fresh :: Name -> Set Name -> (Name, Name)
 fresh x taken = fresh' x
@@ -14,7 +13,19 @@ fresh x taken = fresh' x
         then fresh' (y ++ "'")
         else (x, y)
 
-substitute ::  HasCallStack => Expression -> Expression -> Expression -> Expression
+substituteArray :: AsgTarget -> Expression -> Expression -> Expression
+substituteArray (N _) _ _ =
+  error "only substitute arrays!"
+substituteArray (A name index) replaceBy postc =
+  case postc of
+    ArrayAt n i ->
+      if name == n
+        then IfThenElseE (i :=: index) replaceBy (ArrayAt n i)
+        else ArrayAt n i
+
+    _ -> error "no"
+
+substitute ::  Expression -> Expression -> Expression -> Expression
 substitute name replaceBy postc =
   case postc of
     Name x ->

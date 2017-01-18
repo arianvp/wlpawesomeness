@@ -15,6 +15,7 @@ module Language
   , Type(..)
   , BinOp(..)
   , Quantifier(..)
+  , AsgTarget(..)
   , forAll
   , exists
   , (+.)
@@ -44,7 +45,6 @@ import Data.Typeable (Typeable)
 import Data.Generics.Uniplate.Data ()
 import Text.PrettyPrint hiding (int)
 import GHC.Generics
-import Test.SmallCheck.Series
 
 data Program =
   Program [Parameter]
@@ -52,7 +52,6 @@ data Program =
           [Statement]
   deriving (Eq, Data, Typeable, Generic)
 
-instance Monad m => Serial m Program
 
 prgrm :: Program -> Doc
 prgrm (Program ins outs s) =
@@ -70,11 +69,20 @@ programToStmt :: Program -> [Statement]
 programToStmt (Program ins outs s) =
   [Var (ins ++ outs) s]
 
+data AsgTarget
+  = N Name
+  | A Name Expression
+  deriving  (Eq, Data, Typeable, Generic)
+
+instance Show AsgTarget where
+  show (N name) = name
+  show (A name expr) = name ++ "[" ++ show expr ++ "]"
+
 data Statement
   = Skip
   | Assert Expression
   | Assume Expression
-  | (:=) String
+  | (:=) AsgTarget
          Expression
   | If Expression
        [Statement]
@@ -85,7 +93,6 @@ data Statement
         [Statement]
   deriving (Eq, Data, Typeable, Generic)
 
-instance Monad m => Serial m Statement
 
 instance Show Statement where
   show x = render (stmt x)
@@ -109,7 +116,7 @@ stmt (If e s1 s2) =
   text "}"
 stmt (While e s) =
   text "while(" <> text (show e) <> text "){" $$ nest 2 (stmts s) $$ text "}"
-stmt (a := b) = text a <> text " := " <> text (show b)
+stmt (a := b) =  text (show a) <> text " := " <> text (show b)
 stmt (Var vars s) =
   text "var(" <> (hcat $ punctuate (text ",") (map (text . show) vars)) <>
   text "){" $$
@@ -128,9 +135,6 @@ data Variable =
 instance Ord Variable where
   compare (Variable _ t) (Variable _ t') = compare t t'
 
-instance Monad m => Serial m Variable where
-  series = cons2 (\(NonEmpty x) t -> Variable x t)
-
 instance Show Variable where
   show (Variable name typ) = name ++ ":" ++ show typ
 
@@ -145,7 +149,6 @@ data BinOp
   | Eq
   deriving (Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m BinOp
 
 instance Show BinOp where
   show x =
@@ -171,7 +174,6 @@ instance Show Quantifier where
       (ForAll var) -> "∀" ++ show var
       (Exists var) -> "∃" ++ show var
 
-instance Monad m => Serial m Quantifier
 
 
 forAll :: Variable -> Expression -> Expression
@@ -194,7 +196,6 @@ data Expression
   | IfThenElseE Expression Expression Expression
   deriving (Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m Expression
 
 
 
@@ -265,7 +266,6 @@ data Type
   | ArrayT Array
   deriving (Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m Type
 
 instance Show Type where
   show (Prim primType) = show primType
@@ -276,13 +276,11 @@ data PrimitiveType
   | Bool
   deriving (Show, Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m PrimitiveType
 
 data Array =
   Array PrimitiveType
   deriving (Eq, Data, Typeable, Ord, Generic)
 
-instance Monad m => Serial m Array
 
 instance Show Array where
   show (Array prim) = "[" ++ show prim ++ "]"

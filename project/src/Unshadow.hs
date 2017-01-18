@@ -90,15 +90,25 @@ unshadow' (Var vars stmts:xs) = do
   stmts' <- unshadow' stmts
   xs' <- unshadow' xs
   pure (Var vars' stmts':xs')
-unshadow' ((name := e):xs) = do
+unshadow' ((N name := e):xs) = do
   names <- get
   e' <- unshadowExpr e
   xs' <- unshadow' xs
   case Map.lookup name names of
     Nothing ->
-      pure ((name := e'):xs')
+      pure ((N name := e'):xs')
     Just name' ->
-      pure ((name' := e'):xs')
+      pure ((N name' := e'):xs')
+unshadow' ((A name index := e):xs) = do
+  names <- get
+  index' <- unshadowExpr index
+  e' <- unshadowExpr e
+  xs' <- unshadow' xs
+  case Map.lookup name names of
+    Nothing ->
+      pure ((A name index' := e'):xs')
+    Just name' ->
+      pure ((A name' index' := e'):xs')
 unshadow' (Skip:xs) = do
   xs' <- unshadow' xs
   pure (Skip:xs')

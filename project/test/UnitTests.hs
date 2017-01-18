@@ -60,8 +60,8 @@ spec = do
          do let pbefore =
                   [ Var
                       [Variable "x" (Prim Int), Variable "y" (Prim Int)]
-                      [ "x" := IntVal 1
-                      , "y" := IntVal 3
+                      [ N "x" := IntVal 1
+                      , N "y" := IntVal 3
                       , Var
                           [Variable "y" (Prim Int)]
                           [ Assert (Name "x")
@@ -72,8 +72,8 @@ spec = do
                 pafter =
                   [ Var
                       [Variable "x" (Prim Int), Variable "y" (Prim Int)]
-                      [ "x" := IntVal 1
-                      , "y" := IntVal 3
+                      [ N "x" := IntVal 1
+                      , N "y" := IntVal 3
                       , Var
                           [Variable "y'" (Prim Int)]
                           [ Assert (Name "x")
@@ -136,7 +136,7 @@ spec = do
                       _ -> True)
   describe "Wlp.wlp" $ do
     it "sequential composition is correct for arrays" $ do
-      let before = ["r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
+      let before = [N "r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
       let after = ArrayAt "a" (Name "i") :&&: BoolVal True
       Wlp.wlp before (BoolVal True) `shouldBe` after
     it "can handle array assignment" $ do
