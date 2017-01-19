@@ -5,8 +5,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module Language
-  ( Program(..)
-  , Name
+  ( Name
   , Variable(..)
   , Statement(..)
   , Expression(..)
@@ -37,7 +36,6 @@ module Language
   , int
   , bool
   , showStmts
-  , programToStmt
   ) where
 
 import Data.Data (Data)
@@ -45,29 +43,6 @@ import Data.Typeable (Typeable)
 import Data.Generics.Uniplate.Data ()
 import Text.PrettyPrint hiding (int)
 import GHC.Generics
-
-data Program =
-  Program [Parameter]
-          [Parameter]
-          [Statement]
-  deriving (Eq, Data, Typeable, Generic)
-
-
-prgrm :: Program -> Doc
-prgrm (Program ins outs s) =
-  text "(" <> (hcat $ punctuate (text ",") (map (text . show) ins)) <> text "|" <>
-  (hcat $ punctuate (text ",") (map (text . show) outs)) <>
-  text "){" $$
-  nest 2 (stmts s) $$
-  text "}"
-
-instance Show Program where
-  show = render . prgrm
-
-
-programToStmt :: Program -> [Statement]
-programToStmt (Program ins outs s) =
-  [Var (ins ++ outs) s]
 
 data AsgTarget
   = N Name
@@ -125,7 +100,6 @@ stmt (Var vars s) =
 
 type Name = String
 
-type Parameter = Variable
 
 data Variable =
   Variable Name
@@ -193,6 +167,7 @@ data Expression
   | Not Expression
   | ArrayAt Name
             Expression
+  | ProgramCall Name [Expression]
   | IfThenElseE Expression Expression Expression
   deriving (Eq, Data, Typeable, Ord, Generic)
 
@@ -212,6 +187,7 @@ instance Show Expression where
 
       Not e -> "¬" ++ show e
       ArrayAt n e -> n ++ "[" ++ show e ++ "]"
+      ProgramCall name args -> name ++ "(" ++  render (hcat $ punctuate (text ",") (map (text . show) args)) ++ ")"
       IfThenElseE pred' left right -> show pred' ++ "->" ++ show left ++ "|" ++ show right
 
 -- dsl to make expr building easier

@@ -32,6 +32,7 @@ substituteArray (A name index) replaceBy postc =
     Not e -> Not (substituteArray (A name index) replaceBy e)
     Quantified (ForAll n) e -> forAll n (substituteArray (A name index) replaceBy e)
     Quantified (Exists n) e -> exists n (substituteArray (A name index) replaceBy e)
+    ProgramCall globalName exprs -> ProgramCall globalName (map (substituteArray (A name index) replaceBy) exprs)
     IfThenElseE a b c ->
       IfThenElseE
         (substituteArray (A name index) replaceBy a)
@@ -52,6 +53,7 @@ substitute name replaceBy postc =
     Quantified (ForAll n) b -> forAll n (substitute name replaceBy b)
     Quantified (Exists n) b -> exists n (substitute name replaceBy b)
     Not e -> Not (substitute name replaceBy e)
+    ProgramCall globalName exprs -> ProgramCall globalName (map (substitute name replaceBy) exprs)
     IfThenElseE pred' a b ->
       IfThenElseE
         (substitute name replaceBy pred')

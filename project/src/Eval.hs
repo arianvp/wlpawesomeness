@@ -70,6 +70,8 @@ evalProp' (IntVal x) = error $ show x ++ " is not a boolean"
 evalProp' (Name x) = error $ show x ++ " is still free"
 evalProp' (ArrayAt x _) = error $ show x ++ " is still free"
 evalProp' (IfThenElseE pred' a b) = evalProp' (reduce (IfThenElseE pred' a b))
+evalProp' (ProgramCall _ _) =
+  error "Program call should be gone at this point"
 
 
 -- | Reduces an expression as far as possible
@@ -140,7 +142,8 @@ reduce (IfThenElseE pred' a b) =
     BoolVal bl ->
       if bl then reduce a else reduce b
     e' -> IfThenElseE e' (reduce a) (reduce b)
-
+reduce (ProgramCall _ _) =
+  error "Program call should be gone at this point"
 
 
 

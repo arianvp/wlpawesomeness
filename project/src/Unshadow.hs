@@ -59,6 +59,9 @@ unshadowExpr (Quantified (Exists var) e) = do
 unshadowExpr (Not e) = do
   e' <- unshadowExpr e
   pure (Not e')
+unshadowExpr (ProgramCall globalName es) = do
+  es' <- mapM unshadowExpr es
+  pure (ProgramCall globalName es')
 unshadowExpr (ArrayAt n e) = do
   names <- get
   e' <- unshadowExpr e
