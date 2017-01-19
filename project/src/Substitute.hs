@@ -39,27 +39,25 @@ substituteArray (A name index) replaceBy postc =
         (substituteArray (A name index) replaceBy b)
         (substituteArray (A name index) replaceBy c)
 
+-- | Substitutes occurances of an expression by another expression,
+-- currently limited to ArrayAt and Name
 substitute ::  Expression -> Expression -> Expression -> Expression
 substitute name replaceBy postc =
-  case postc of
-    Name x ->
-      if Name x == name
-        then replaceBy
-        else Name x
-    IntVal x -> IntVal x
-    BoolVal x -> BoolVal x
-    BinOp b x y ->
-      BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
-    Quantified (ForAll n) b -> forAll n (substitute name replaceBy b)
-    Quantified (Exists n) b -> exists n (substitute name replaceBy b)
-    Not e -> Not (substitute name replaceBy e)
-    ProgramCall globalName exprs -> ProgramCall globalName (map (substitute name replaceBy) exprs)
-    IfThenElseE pred' a b ->
-      IfThenElseE
-        (substitute name replaceBy pred')
-        (substitute name replaceBy a)
-        (substitute name replaceBy b)
-    ArrayAt n i ->
-      if ArrayAt n i == name
-          then replaceBy
-          else ArrayAt n (substitute name replaceBy i)
+  if name == postc
+    then replaceBy
+    else
+      case postc of
+        BinOp b x y ->
+          BinOp b (substitute name replaceBy x) (substitute name replaceBy y)
+        Quantified (ForAll n) b -> forAll n (substitute name replaceBy b)
+        Quantified (Exists n) b -> exists n (substitute name replaceBy b)
+        Not e -> Not (substitute name replaceBy e)
+        ProgramCall globalName exprs -> ProgramCall globalName (map (substitute name replaceBy) exprs)
+        IfThenElseE pred' a b ->
+          IfThenElseE
+            (substitute name replaceBy pred')
+            (substitute name replaceBy a)
+          (substitute name replaceBy b)
+        ArrayAt n i ->
+          ArrayAt n (substitute name replaceBy i)
+        a -> a

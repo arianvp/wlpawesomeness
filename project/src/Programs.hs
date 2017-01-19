@@ -103,10 +103,11 @@ swap =
       ]
       [ Var
           [ Variable "tmp" (Prim Int) ]
-          [ N "tmp" := ArrayAt "a" (Name "i")
-          , A "a" (Name "i") := ArrayAt "a" (Name "j")
-          , A "a" (Name "j") := Name "tmp"
-          , N "a'" := Name "a"
+          [ N "a'" := Name "a"
+          , N "tmp" := ArrayAt "a'" (Name "i")
+          , A "a'" (Name "j") := Name "tmp"
+          , A "a'" (Name "i") := ArrayAt "a'" (Name "j")
           ]
+      , Assert ((ArrayAt "a" (Name "i") :=: ArrayAt "a'" (Name "j")) :&&: (ArrayAt "a" (Name "j") :=: ArrayAt "a'" (Name "i")))
       ]
   ]

@@ -134,7 +134,6 @@ spec = do
                       If {} -> False
                       While {} -> False
                       _ -> True)
-       
   describe "Wlp.wlp" $ do
     it "sequential composition is correct for arrays" $ do
       let before = [N "r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
