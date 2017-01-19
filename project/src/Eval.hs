@@ -7,7 +7,6 @@ import Test.SmallCheck hiding (forAll, exists)
 import qualified Test.SmallCheck as Property
 import Test.SmallCheck.Series
 
-
 -- | Takes an expression in Sorted Prenex normal form,
 -- and turns it into a smallCheck property
 evalProp' :: Monad m => Expression -> Property m
