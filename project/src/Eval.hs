@@ -39,14 +39,14 @@ evalProp' (Quantified (ForAll (Variable name (ArrayT (Array Int)))) expr) =
   -- this are simply the free variables which have the same name as the
   -- current array
   let
-    isCurrentArray (ArrayAt name' _) = name' == name
+    isCurrentArray (ArrayAt (Name name') _) = name' == name
     isCurrentArray _ = False
     usages = filter isCurrentArray . free $ expr
-    toQuant (ArrayAt name' e) accum =
+    toQuant (ArrayAt (Name name') e) accum =
       let
-        repBy = name' ++ show e
+        repBy = name' ++ "[" ++ show e ++ "]"
       in
-        forAll (Variable repBy (Prim Int)) (substitute (ArrayAt name' e) (Name repBy) accum)
+        forAll (Variable repBy (Prim Int)) (substitute (ArrayAt (Name name') e) (Name repBy) accum)
     toQuant _ _ = error "should only have arrays at this point"
   in
     evalProp' $ foldr toQuant expr usages

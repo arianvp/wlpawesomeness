@@ -136,13 +136,13 @@ spec = do
                       _ -> True)
   describe "Wlp.wlp" $ do
     it "sequential composition is correct for arrays" $ do
-      let before = [N "r" := Name "i", Assert (ArrayAt "a" (Name "r"))]
-      let after = ArrayAt "a" (Name "i") :&&: BoolVal True
+      let before = [N "r" := Name "i", Assert (ArrayAt (Name "a") (Name "r"))]
+      let after = ArrayAt (Name "a") (Name "i") :&&: BoolVal True
       Wlp.wlp before (BoolVal True) `shouldBe` after
     it "the array assignment example from lecture notes works" $ do
       let prog = [A "a" (Name "i") := IntVal 0]
-      let postc =  ArrayAt "a" (Name "i") :=: ArrayAt "a" (IntVal 3)
-      let wlp = IntVal 0 :=: (IfThenElseE  (IntVal 3 :=: Name "i") (IntVal 0) (ArrayAt "a" (IntVal 3)))
+      let postc =  ArrayAt (Name "a") (Name "i") :=: ArrayAt (Name "a") (IntVal 3)
+      let wlp = IntVal 0 :=: (IfThenElseE  (IntVal 3 :=: Name "i") (IntVal 0) (ArrayAt (Name "a") (IntVal 3)))
       Eval.reduce (Wlp.wlp prog postc) `shouldBe` wlp
 
   describe "Eval" $ do
@@ -157,42 +157,42 @@ spec = do
         wlp =
           forAll (Variable "a" (ArrayT (Array Int))) $
           forAll (Variable "i" (Prim Int)) $
-            ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")
+            ArrayAt (Name "a") (Name "i") :=: ArrayAt (Name "a") (Name "i")
       property .  Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "should be able to quickcheck a simple array'" $ do
       let
         wlp =
           forAll (Variable "i" (Prim Int)) $
           forAll (Variable "a" (ArrayT (Array Int))) $
-            ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")
+            ArrayAt (Name "a") (Name "i") :=: ArrayAt (Name "a") (Name "i")
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "the form of the expr doesnt matter as long as it evaluates [1]" $ do
       let
         wlp =
           forAll (Variable "i" (Prim Int)) $
           forAll (Variable "a" (ArrayT (Array Int))) $
-            (ArrayAt "a" (IntVal 1 :+: Name "i") :=: ArrayAt "a" (Name "i" :+: IntVal 1))
+            (ArrayAt (Name "a") (IntVal 1 :+: Name "i") :=: ArrayAt (Name "a") (Name "i" :+: IntVal 1))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "the order of forall does not matter [1] " $ do
       let
         wlp =
           forAll (Variable "a" (ArrayT (Array Int))) $
           forAll (Variable "i" (Prim Int)) $
-            (ArrayAt "a" (IntVal 1 :+: Name "i") :=: ArrayAt "a" (Name "i" :+: IntVal 1))
+            (ArrayAt (Name "a") (IntVal 1 :+: Name "i") :=: ArrayAt (Name "a") (Name "i" :+: IntVal 1))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "the form of the expr doesnt matter as long as it evaluates [2]" $ do
       let
         wlp =
           forAll (Variable "i" (Prim Int)) $
           forAll (Variable "a" (ArrayT (Array Int))) $
-            (ArrayAt "a" (Name "i" :+: IntVal 1) :=: ArrayAt "a" (IntVal 1 :+: Name "i"))
+            (ArrayAt (Name "a") (Name "i" :+: IntVal 1) :=: ArrayAt (Name "a") (IntVal 1 :+: Name "i"))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "the order of forall does not matter! [2] " $ do
       let
         wlp =
           forAll (Variable "a" (ArrayT (Array Int))) $
           forAll (Variable "i" (Prim Int)) $
-            (ArrayAt "a" (Name "i" :+: IntVal 1) :=: ArrayAt "a" (IntVal 1 :+: Name "i"))
+            (ArrayAt (Name "a") (Name "i" :+: IntVal 1) :=: ArrayAt (Name "a") (IntVal 1 :+: Name "i"))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
 
     it "should be able to quickcheck multiple simple array'" $ do
@@ -201,16 +201,16 @@ spec = do
           forAll (Variable "i" (Prim Int)) $
           forAll (Variable "a" (ArrayT (Array Int))) $
           forAll (Variable "b" (ArrayT (Array Int))) $
-            (ArrayAt "a" (Name "i") :=: ArrayAt "a" (Name "i")) :&&:
-            (ArrayAt "b" (Name "j") :=: ArrayAt "b" (Name "j"))
+            (ArrayAt (Name "a") (Name "i") :=: ArrayAt (Name "a") (Name "i")) :&&:
+            (ArrayAt (Name "b") (Name "j") :=: ArrayAt (Name "b") (Name "j"))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "foralls should not cause any issues" $ do
       let
         wlp =
           forAll (Variable "a" (ArrayT (Array Int))) $
-            (ArrayAt "a" (IntVal 0) :=: IntVal 0) :==>:
+            (ArrayAt (Name "a") (IntVal 0) :=: IntVal 0) :==>:
               (forAll (Variable "i" (Prim Int))
-                ((Name "i" :=: IntVal 0) :==>: (ArrayAt "a" (Name "i") :=: IntVal 0)))
+                ((Name "i" :=: IntVal 0) :==>: (ArrayAt (Name "a") (Name "i") :=: IntVal 0)))
       property . Eval.evalProp' . Logic.sortedPrenex $ wlp
     it "ifthenelse works as expected [1]" $ do
       let x = IfThenElseE (BoolVal True) (Name "x") (Name "y")

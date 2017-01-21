@@ -18,10 +18,11 @@ substituteArray (N _) _ _ =
   error "only substitute arrays!"
 substituteArray (A name index) replaceBy postc =
   case postc of
-    ArrayAt n i ->
+    ArrayAt (Name n) i ->
       if name == n
-        then IfThenElseE (i :=: index) replaceBy (ArrayAt n i)
-        else ArrayAt n (substituteArray (A name index) replaceBy i)
+        then IfThenElseE (i :=: index) replaceBy (ArrayAt (Name n) i)
+        else ArrayAt (Name n) (substituteArray (A name index) replaceBy i)
+    ArrayAt _ _ -> error "At this point, repby should be gone already!"
     IntVal x ->  IntVal x
     BoolVal x -> BoolVal x
     Name n -> Name n
@@ -40,7 +41,7 @@ substituteArray (A name index) replaceBy postc =
         (substituteArray (A name index) replaceBy c)
 
 -- | Substitutes occurances of an expression by another expression,
--- currently limited to ArrayAt and Name
+-- inside an expression
 substitute ::  Expression -> Expression -> Expression -> Expression
 substitute name replaceBy postc =
   if name == postc
@@ -59,5 +60,5 @@ substitute name replaceBy postc =
             (substitute name replaceBy a)
           (substitute name replaceBy b)
         ArrayAt n i ->
-          ArrayAt n (substitute name replaceBy i)
+          ArrayAt (substitute name replaceBy n) (substitute name replaceBy i)
         a -> a

@@ -63,11 +63,9 @@ unshadowExpr (ProgramCall globalName es) = do
   es' <- mapM unshadowExpr es
   pure (ProgramCall globalName es')
 unshadowExpr (ArrayAt n e) = do
-  names <- get
+  n' <- unshadowExpr n
   e' <- unshadowExpr e
-  case Map.lookup n names of
-    Nothing -> pure (ArrayAt n e')
-    Just n' -> pure (ArrayAt n' e')
+  pure (ArrayAt n' e')
 unshadowExpr (IfThenElseE pred' a b) = do
   pred'' <- unshadowExpr pred'
   a' <- unshadowExpr a

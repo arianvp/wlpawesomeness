@@ -165,7 +165,7 @@ data Expression
           Expression
   | Quantified Quantifier Expression
   | Not Expression
-  | ArrayAt Name
+  | ArrayAt Expression
             Expression
   | ProgramCall Name [Expression]
   | IfThenElseE Expression Expression Expression
@@ -186,7 +186,7 @@ instance Show Expression where
       Quantified (Exists var) e -> "∃" ++ show var ++ "." ++ show e
 
       Not e -> "¬" ++ show e
-      ArrayAt n e -> n ++ "[" ++ show e ++ "]"
+      ArrayAt n e -> show n ++ "[" ++ show e ++ "]"
       ProgramCall name args -> name ++ "(" ++  render (hcat $ punctuate (text ",") (map (text . show) args)) ++ ")"
       IfThenElseE pred' left right -> show pred' ++ "->" ++ show left ++ "|" ++ show right
 
