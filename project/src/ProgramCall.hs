@@ -1,7 +1,12 @@
 module ProgramCall where
+
 import Data.Maybe
 import Language
 import Programs
+import Control.Monad.State
+import Data.Map (Map)
+import Unshadow
+import qualified Data.Map as Map
 
 type LUT = [(Name, [Statement])]
 
@@ -37,7 +42,6 @@ example2 =
       ]
   ]
 
-
 assignInputs :: String -> Expression -> Statement
 assignInputs s1 s2 = N s1 := s2
 
@@ -58,9 +62,8 @@ replacePC (N output1) progName inputs1 _usedVar =
   [Var variables (buildNewstatements variables inputs1 output1 statements)]
   where
     (Var variables statements:_stmts) = fromJust (lookup progName lookupTable)
+replacePC (A _ _) _progName _inputs1 _usedVar = error "todo"
 
-replacePC (A _ _) _progName _inputs1 _usedVar =
-  error "todo"
 -- TODO:: this are statements of program we are calling, we should first unshadow this using usedVar
 --newstatements is [assign input, body, assign output]
 buildNewstatements :: [Variable]
@@ -77,9 +80,37 @@ buildNewstatements variables inputs1 output1 statements =
 --transform program
 --x = transform1 example2 []
 --
-
-
-
 inlineCalls :: LUT -> [Statement] -> [Statement]
-inlineCalls _lut _ = []
+inlineCalls lut stmts = evalState (inlineCalls' lut stmts) Map.empty
+
+inlineCalls' :: LUT -> [Statement] -> State (Map Name Name) [Statement]
+inlineCalls' lut stmts = do
+  _ <- unshadow' stmts -- we only do this to set the unshadow state
+  case stmts of
+    [] -> pure []
+    (N output := ProgramCall prog inputs:xs) -> do
+      xs' <- inlineCalls' lut xs
+      [Var progVars progStmts] <- unshadow' $ fromJust (lookup prog lut)
+      pure $ Var progVars (buildNewstatements progVars inputs output progStmts) : xs'
+    (A _i _output := ProgramCall _ _:_) -> error "we do not support array assignment for program calls"
+    (Var vars body:xs) -> do
+      body' <- inlineCalls' lut body
+      xs' <- inlineCalls' lut xs
+      pure $ Var vars body':xs'
+    (If b s1 s2:xs) -> do
+      s1' <- inlineCalls' lut s1
+      s2' <- inlineCalls' lut s2
+      xs' <- inlineCalls' lut xs
+      pure $ If b s1' s2':xs'
+    (While b s1:xs) -> do
+      s1' <- inlineCalls' lut s1
+      xs' <- inlineCalls' lut xs
+      pure $ While b s1':xs'
+
+    (x:xs) -> do
+      xs' <- inlineCalls' lut xs
+      pure $ x:xs'
+
+
+
 

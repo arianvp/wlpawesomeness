@@ -15,6 +15,7 @@ import Data.Generics.Uniplate.Operations
 
 import Verify
 import qualified Programs
+import qualified ProgramCall
 import qualified Logic
 import qualified Eval
 
@@ -219,6 +220,8 @@ spec = do
       let x = IfThenElseE (BoolVal False) (Name "x") (Name "y")
       Eval.reduce x `shouldBe` Name "y"
   describe "ProgramCall" $ do
+    it "programs without program calls are unaffected" $ do
+      ProgramCall.inlineCalls [] Programs.minind `shouldBe` Programs.minind
     it "should inline one call into the other." $ do
       let
         prog =
@@ -226,11 +229,78 @@ spec = do
               [Variable "k" (Prim Int), Variable "r" (Prim Int)]
               [N "r" := (Name "k" :+: IntVal 1)]
           ]
-        lut = [("prog",prog)]
+        lut = [("prog", prog)]
         caller =
           [ Var
-              [Variable "k'" (Prim Int), Variable "r'" (Prim Int)]
-              []
+              [Variable "a" (Prim Int), Variable "b" (Prim Int)]
+              [ N "b" := ProgramCall "prog" [Name "a"]]
           ]
-      True `shouldBe` False
+        result =
+          [ Var
+              [Variable "a" (Prim Int), Variable "b" (Prim Int)]
+              [ Var
+                  [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+                  [ N "k" := Name "a"
+                  , N "r" := (Name "k" :+: IntVal 1)
+                  , N "b" := Name "r"
+                  ]
+              ]
+          ]
+      ProgramCall.inlineCalls lut caller `shouldBe` result
+    it "should make sure that the inlined function is fresh." $ do
+      let
+        prog =
+          [ Var
+              [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+              [N "r" := (Name "k" :+: IntVal 1)]
+          ]
+        lut = [("prog", prog)]
+        caller =
+          [ Var
+              [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+              [ N "r" := ProgramCall "prog" [Name "k"]]
+          ]
+        result =
+          [ Var
+              [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+              [ Var
+                  [Variable "k'" (Prim Int), Variable "r'" (Prim Int)]
+                  [ N "k'" := Name "k"
+                  , N "r'" := (Name "k'" :+: IntVal 1)
+                  , N "r" := Name "r'"
+                  ]
+              ]
+          ]
+      ProgramCall.inlineCalls lut caller `shouldBe` result
+    it "should work on nested statements" $ do
+      let
+        prog =
+          [ Var
+              [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+              [N "r" := (Name "k" :+: IntVal 1)]
+          ]
+        lut = [("prog", prog)]
+        caller =
+          [ Var
+              [Variable "a" (Prim Int), Variable "b" (Prim Int)]
+              [ If (BoolVal True)
+                  [N "b" := ProgramCall "prog" [Name "a"]]
+                  [Skip]
+              ]
+          ]
+        result =
+          [ Var
+              [Variable "a" (Prim Int), Variable "b" (Prim Int)]
+              [ If (BoolVal True)
+                  [ Var
+                      [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+                      [ N "k" := Name "a"
+                      , N "r" := (Name "k" :+: IntVal 1)
+                      , N "b" := Name "r"
+                      ]
+                  ]
+                  [Skip]
+              ]
+          ]
+      ProgramCall.inlineCalls lut caller `shouldBe` result
 
