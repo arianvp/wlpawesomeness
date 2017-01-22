@@ -303,4 +303,70 @@ spec = do
               ]
           ]
       ProgramCall.inlineCalls lut caller `shouldBe` result
+    it "works for a program with more than two variables" $ do
+      let
+        prog =
+          [ Var
+              [ Variable "a" (Prim Int)
+              , Variable "b" (Prim Int)
+              , Variable "c" (Prim Int)
+              , Variable "d" (Prim Int)
+              ]
+              [ N "b" := Name "a"
+              , N "c" := Name "b"
+              , N "d" := Name "c"
+              ]
+          ]
+        lut = [("prog", prog)]
+        caller =
+          [ Var
+              [ Variable "a" (Prim Int)
+              , Variable "b" (Prim Int)
+              , Variable "c" (Prim Int)
+              , Variable "d" (Prim Int)
+              ]
+              [ N "d" := ProgramCall "prog" [Name "a", Name "b", Name "c"] ]
+          ]
+        result =
+          [ Var
+              [ Variable "a" (Prim Int)
+              , Variable "b" (Prim Int)
+              , Variable "c" (Prim Int)
+              , Variable "d" (Prim Int)
+              ]
+            [ Var
+                [ Variable "a'" (Prim Int)
+                , Variable "b'" (Prim Int)
+                , Variable "c'" (Prim Int)
+                , Variable "d'" (Prim Int)
+                ]
+                [ N "a'" := Name "a"
+                , N "b'" := Name "b"
+                , N "c'" := Name "c"
+                , N "b'" := Name "a'"
+                , N "c'" := Name "b'"
+                , N "d'" := Name "c'"
+                , N "d" := Name "d'"
+                ]
+            ]
+          ]
+
+      ProgramCall.inlineCalls lut caller `shouldBe` result
+    it "A program that is simply a shim for another should have an identical wlp" $ do
+      let
+        lut = [("swap", Programs.swap)]
+        prog =
+          [ Var
+              [ Variable "a" (ArrayT (Array Int))
+              , Variable "i" (Prim Int)
+              , Variable "j" (Prim Int)
+              , Variable "a'" (ArrayT (Array Int))
+              ]
+              [ N "a'" := ProgramCall "swap" [Name "a", Name "i", Name "j"]]
+          ]
+
+      Logic.normalize (Wlp.wlp (ProgramCall.inlineCalls lut prog) (BoolVal True))
+      `shouldBe` Logic.normalize (Wlp.wlp Programs.swap (BoolVal True))
+
+
 

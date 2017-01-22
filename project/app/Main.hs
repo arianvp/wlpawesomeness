@@ -13,4 +13,5 @@ main = do
   verify 3 5 Programs.swapWrong
   putStrLn "swap (SHOULD SUCCEED):"
   verify 3 5 Programs.swap
+  verify 3 5 Programs.callsAdd
 

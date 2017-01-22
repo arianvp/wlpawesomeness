@@ -8,39 +8,6 @@ import Data.Map (Map)
 import Unshadow
 import qualified Data.Map as Map
 
-type LUT = [(Name, [Statement])]
-
-lookupTable :: LUT
-lookupTable =
-  [ ("minind", minind)
-  , ("swap", swap)
-  , ("example1", example1)
-  , ("example2", example2)
-  ]
-
-example1 :: [Statement]
-example1 =
-  [ Var
-      [ Variable "k" (Prim Int)
-      , Variable "m" (Prim Int)
-      , Variable "r" (Prim Int)
-      ]
-      [N "k" := (Name "k" :+: IntVal 1), N "r" := (Name "k" :+: Name "m")]
-  ]
-
-example2 :: [Statement]
-example2 =
-  [ Var
-      [ Variable "c" (Prim Int)
-      , Variable "p" (Prim Int)
-      , Variable "d" (Prim Int)
-      ]
-      [ N "c" := IntVal 3
-      , N "p" := IntVal 1
-      , N "d" := ProgramCall "example1" [Name "c" :+: IntVal 1, Name "p"]
-      , N "p" := Name "d"
-      ]
-  ]
 
 assignInputs :: String -> Expression -> Statement
 assignInputs s1 s2 = N s1 := s2

@@ -2,6 +2,18 @@ module Programs where
 
 import Language
 
+type LUT = [(Name, [Statement])]
+
+lookupTable :: LUT
+lookupTable =
+  [ ("minind", minind)
+  , ("swap", swap)
+  , ("swapWrong", swapWrong)
+  , ("minindWrong", minindWrong)
+  , ("add", add)
+  , ("callsAdd", callsAdd)
+  ]
+
 exampleE :: [Statement]
 exampleE =
   [ Var
@@ -38,8 +50,8 @@ minind =
   in [ Var
          [ Variable "i" (Prim Int)
          , Variable "N" (Prim Int)
-         , Variable "r" (Prim Int)
          , Variable "a" (ArrayT (Array Int))
+         , Variable "r" (Prim Int)
          ]
          [ Assume iinN
          , Var
@@ -165,7 +177,36 @@ sort =
                   [Skip]
               , N "i" := (Name "i" :+: IntVal 1)
               ]
+          , N "a'" := Name "a"
           ]
+      , Assert (forAll (Variable "i" (Prim Int)) $
+                forAll (Variable "j" (Prim Int)) $
+                  ((Name "i" :<: Name "N") :&&: (Name "j" :<: Name "N")
+                    :&&: (Name "i" :<=: Name "n")) :==>:
+                    (ArrayAt (Name "a") (Name "i") :<=: ArrayAt (Name "a'") (Name "j"))
+        )
+      ]
+  ]
+
+
+add :: [Statement]
+add =
+  [ Var
+      [Variable "a" (Prim Int), Variable "b" (Prim Int), Variable "r" (Prim Int)]
+      [N "r" := (Name "a" :+: Name "b")]
+  ]
+
+callsAdd :: [Statement]
+callsAdd =
+  [ Var
+      [ Variable "a" (Prim Int)
+      , Variable "b" (Prim Int)
+      , Variable "r" (Prim Int)
+      ]
+      [ Assume (IntVal 0 :<: Name "a")
+      , Assume (IntVal 0 :<=: Name "b")
+      , N "r" := ProgramCall "add" [Name "a", Name "b"]
+      , Assert (IntVal 2 :<=: Name "r")
       ]
   ]
 

@@ -5,7 +5,9 @@ module Verify where
 import Language
 import Logic
 import Wlp
+import Programs
 import ProgramPath
+import ProgramCall
 import Eval
 import Unshadow
 import Test.SmallCheck.Drivers
@@ -21,7 +23,12 @@ verify smallCheckDepth pathsDepth program = do
   putStrLn $ "\t pathsDepth = " ++ show pathsDepth
 
   let unshadowed = unshadow program
-  let ps = paths pathsDepth unshadowed
+  putStrLn "Unshadowed:"
+  print unshadowed
+  let inlined = inlineCalls lookupTable unshadowed
+  putStrLn "Inlined:"
+  print inlined
+  let ps = paths pathsDepth inlined
   let wlps = map (normalize . flip wlp (BoolVal True)) ps
 
   putStrLn "Hold on your butts! this might take a while"

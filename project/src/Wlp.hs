@@ -23,4 +23,4 @@ wlp (stmt:stmts) postc =
       -- replace array names as well
       substitute (Name n) e (wlp stmts postc)
     (A n i := e2) -> substituteArray (A n i) e2 (wlp stmts postc)
-    _ -> error "wlp only supports cannonical statements, no branching"
+    e -> error $ "wlp only supports cannonical statements, no branching in:\n" ++ show e

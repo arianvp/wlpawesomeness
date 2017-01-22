@@ -103,7 +103,12 @@ evalProp' (ProgramCall _ _) =
 reduce :: Expression -> Expression
 reduce (Name n) = Name n
 reduce (ArrayAt name e) = ArrayAt name (reduce e)
-reduce (BinOp Impl a b) =  reduce a :==>: reduce b
+reduce (BinOp Impl a b) =
+  case (reduce a, reduce b) of
+    (BoolVal a', BoolVal b') ->
+      BoolVal (a' <= b')
+    (a', b') ->
+      BinOp Impl a' b'
 reduce (IntVal x) =  IntVal x
 reduce (BoolVal x) =  BoolVal x
 reduce (BinOp Plus a b) =
