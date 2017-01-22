@@ -188,7 +188,7 @@ instance Show Expression where
       Not e -> "¬" ++ show e
       ArrayAt n e -> show n ++ "[" ++ show e ++ "]"
       ProgramCall name args -> name ++ "(" ++  render (hcat $ punctuate (text ",") (map (text . show) args)) ++ ")"
-      IfThenElseE pred' left right -> show pred' ++ "->" ++ show left ++ "|" ++ show right
+      IfThenElseE pred' left right -> show pred' ++ "->" ++ "(" ++ show left ++ ")" ++ "|" ++ "(" ++ show right ++ ")"
 
 -- dsl to make expr building easier
 int :: Int -> Expression

@@ -218,4 +218,19 @@ spec = do
     it "ifthenelse works as expected [2]" $ do
       let x = IfThenElseE (BoolVal False) (Name "x") (Name "y")
       Eval.reduce x `shouldBe` Name "y"
+  describe "ProgramCall" $ do
+    it "should inline one call into the other." $ do
+      let
+        prog =
+          [ Var
+              [Variable "k" (Prim Int), Variable "r" (Prim Int)]
+              [N "r" := (Name "k" :+: IntVal 1)]
+          ]
+        lut = [("prog",prog)]
+        caller =
+          [ Var
+              [Variable "k'" (Prim Int), Variable "r'" (Prim Int)]
+              []
+          ]
+      True `shouldBe` False
 

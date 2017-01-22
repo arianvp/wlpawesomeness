@@ -3,9 +3,10 @@
 module Logic where
 import Language
 import Data.List (sort)
+import Free
 
 normalize :: Expression -> Expression
-normalize = normalize' . sortedPrenex
+normalize = normalize' . stripConditionally . sortedPrenex
 
 -- strips away universal quantification at the beginning
 strip :: Expression -> Expression
@@ -18,6 +19,20 @@ strip' (Quantified q e) =
   let (e', quants) = strip' e
   in (e', q:quants)
 strip' e = (e, [])
+
+-- removes any quantifiers that were unneccesary
+stripConditionally :: Expression -> Expression
+stripConditionally _orig@(Quantified (ForAll v@(Variable name _x)) e) =
+  if any isUsed (free e)
+    -- if it was in the expression, we can't remove it
+    then Quantified (ForAll v) (stripConditionally e)
+    -- otherwise we can strip it
+    else stripConditionally e
+  where
+    isUsed (Name name') = name == name'
+    isUsed (ArrayAt (Name n) _) = name == n
+    isUsed _ = False
+stripConditionally e = e
 
 
 normalize' :: Expression -> Expression
@@ -36,7 +51,6 @@ normalize' (BoolVal False :||: e1) = normalize' e1
 normalize' (e1 :||: BoolVal False) = normalize' e1
 normalize' (BoolVal True :||: _e1) = BoolVal True
 normalize' (_e1 :||: BoolVal True) = BoolVal True
-
 
 normalize' (a :=: b) = normalize' a :=: normalize' b
 normalize' (a :<: b) = normalize' a :<: normalize' b

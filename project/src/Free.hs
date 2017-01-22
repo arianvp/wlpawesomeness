@@ -5,7 +5,8 @@ import Data.Set
 --types :: [Statement] -> Map Name Type
 --types = undefined
 
--- naive free variable calculator
+-- naive free variable calculator. Every ArrayAt is seen
+-- as a separate variable by it
 free :: Expression -> [Expression]
 free = toList . free'
 free' :: Expression -> Set Expression

@@ -1,5 +1,6 @@
 module Unshadow
 ( unshadow
+, unshadow'
 ) where
 
 import Language

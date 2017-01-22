@@ -12,7 +12,9 @@ import Test.SmallCheck.Series
 evalProp' :: Monad m => Expression -> Property m
 
 -- first lets get rid of all primitive variables by substituting
--- them by values
+-- them by values. Once we have substituted them by values,
+-- we reduce the epression as far as possible. (Evaluate it until
+-- you hit a free variable)  (see the function 'reduce' for details)
 evalProp' (Quantified (ForAll (Variable name (Prim Int))) expr) =
   let
     namedSeries :: Monad m => Series m (Name, Int)
@@ -33,11 +35,32 @@ evalProp' (Quantified (Exists (Variable name (Prim Bool))) expr) =
 -- now we should only have array quantifiers left. At this point
 -- arrays are the only free variables left, as all other free variables
 -- have already been replaced by concrete values by smallCheck
--- we can now see each array index as a separate variable that we quantify over
+-- we can now see each array index as a separate variable that we quantify over.
+-- Furthemore, because we reduced the expression in each step,   the
+-- index  (i+1) will be considered the same index as (1+i) etc..
 evalProp' (Quantified (ForAll (Variable name (ArrayT (Array Int)))) expr) =
   -- to do this, lets first find all usages of the array that we're quantifying over.
   -- this are simply the free variables which have the same name as the
-  -- current array
+  -- current array.  
+  let
+    isCurrentArray (ArrayAt (Name name') _) = name' == name
+    isCurrentArray _ = False
+    usages = filter isCurrentArray . free $ expr
+    toQuant (ArrayAt (Name name') e) accum =
+      let
+        -- for each usage, we create a new primitive representation
+        repBy = name' ++ "[" ++ show e ++ "]"
+      in
+        -- we then substitute each usage of the array by their primitive representation
+        -- and quantify over the new variable name
+        forAll (Variable repBy (Prim Int)) (substitute (ArrayAt (Name name') e) (Name repBy) accum)
+    toQuant _ _ = error "should only have arrays at this point"
+  in
+    -- finally we calculate a property for this. Now we do not have arrays anymore,
+    -- just primitives, which we know how to evaluate.  (simply call reduce and check
+    -- if its True)
+    evalProp' $ foldr toQuant expr usages
+evalProp' (Quantified (ForAll (Variable name (ArrayT (Array Bool)))) expr) =
   let
     isCurrentArray (ArrayAt (Name name') _) = name' == name
     isCurrentArray _ = False
@@ -46,12 +69,10 @@ evalProp' (Quantified (ForAll (Variable name (ArrayT (Array Int)))) expr) =
       let
         repBy = name' ++ "[" ++ show e ++ "]"
       in
-        forAll (Variable repBy (Prim Int)) (substitute (ArrayAt (Name name') e) (Name repBy) accum)
+        forAll (Variable repBy (Prim Bool)) (substitute (ArrayAt (Name name') e) (Name repBy) accum)
     toQuant _ _ = error "should only have arrays at this point"
   in
     evalProp' $ foldr toQuant expr usages
-evalProp' (Quantified (ForAll (Variable _name (ArrayT (Array Bool)))) _expr) =
-  error "should be the same as integers. gotta implement later"
 evalProp' (Quantified (Exists (Variable _name typ)) _expr) =
   error $ "We do not support existential quantification " ++ show typ
 
@@ -64,6 +85,8 @@ evalProp' (BinOp Impl a b) = evalProp' a ==> evalProp' b
 -- other operators should simply be reduced
 evalProp' (BinOp x a b) = evalProp' (reduce (BinOp x a b))
 evalProp' (Not expr) = evalProp' (reduce (Not expr))
+-- if we end up with a boolean value, then we know if the
+-- property is falsifierd or not
 evalProp' (BoolVal x) = Property.forAll x
 evalProp' (IntVal x) = error $ show x ++ " is not a boolean"
 evalProp' (Name x) = error $ show x ++ " is still free"
@@ -77,7 +100,6 @@ evalProp' (ProgramCall _ _) =
 -- where as far as possible means:
 -- * reduce until you hit a free variable
 -- * Do not reduce implications, because those are magic in smallCheck
---
 reduce :: Expression -> Expression
 reduce (Name n) = Name n
 reduce (ArrayAt name e) = ArrayAt name (reduce e)

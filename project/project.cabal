@@ -18,6 +18,7 @@ library
   ghc-options:     -Wall -Werror
   exposed-modules:     Language
                      , ProgramPath
+                     , ProgramCall
                      , Wlp
                      , Unshadow
                      , Logic

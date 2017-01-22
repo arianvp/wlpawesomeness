@@ -4,9 +4,13 @@ import Verify
 
 main :: IO ()
 main = do
-  verify 2 2 Programs.exampleE
-  putStrLn ""
-  verify 2 4 Programs.minindWrong
-  putStrLn ""
-  verify 2 5 Programs.minind
-  putStrLn ""
+  verify 3 5 Programs.exampleE
+  putStrLn "minindWrong (SHOULD FAIL):"
+  verify 3 5 Programs.minindWrong
+  putStrLn "minind (SHOULD SUCCEED):"
+  verify 3 5 Programs.minind
+  putStrLn "swapWrong (SHOULD FAIL):"
+  verify 3 5 Programs.swapWrong
+  putStrLn "swap (SHOULD SUCCEED):"
+  verify 3 5 Programs.swap
+

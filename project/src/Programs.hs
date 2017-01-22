@@ -143,3 +143,35 @@ swap =
            (ArrayAt (Name "a") (Name "j") :=: ArrayAt (Name "a'") (Name "i")))
       ]
   ]
+
+
+sort :: [Statement]
+sort =
+  [ Var
+      [ Variable "a" (ArrayT (Array Int))
+      , Variable "N" (Prim Int)
+      , Variable "a'" (ArrayT (Array Int))
+      ]
+      [ Var
+          [Variable "i" (Prim Int)]
+          [ N "i" := IntVal 0
+          , While
+              (Name "i" :<: (Name "N" :-: IntVal 1))
+              [ N "m" := ProgramCall "minind" [Name "a",  Name "i" :+: IntVal 1, Name "N"]
+              , If
+                  (ArrayAt (Name "a") (Name "m") :<:
+                   ArrayAt (Name "a") (Name "i"))
+                  [N "a" := ProgramCall "swap" [Name "a", Name "i", Name "m"]]
+                  [Skip]
+              , N "i" := (Name "i" :+: IntVal 1)
+              ]
+          ]
+      ]
+  ]
+
+{-inlineCalls :: LUT -> [Statement] -> [Statement]
+inlineCalls lut prog =
+  let takenNames = free prog
+  in undefined
+-}
+
